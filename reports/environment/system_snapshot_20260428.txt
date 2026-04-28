@@ -1,0 +1,261 @@
+===== DATE =====
+Selasa 28 Apr 2026 10:37:11  +08
+===== OS =====
+Distributor ID:	Ubuntu
+Description:	Ubuntu 22.04.5 LTS
+Release:	22.04
+Codename:	jammy
+PRETTY_NAME="Ubuntu 22.04.5 LTS"
+NAME="Ubuntu"
+VERSION_ID="22.04"
+VERSION="22.04.5 LTS (Jammy Jellyfish)"
+VERSION_CODENAME=jammy
+ID=ubuntu
+ID_LIKE=debian
+HOME_URL="https://www.ubuntu.com/"
+SUPPORT_URL="https://help.ubuntu.com/"
+BUG_REPORT_URL="https://bugs.launchpad.net/ubuntu/"
+PRIVACY_POLICY_URL="https://www.ubuntu.com/legal/terms-and-policies/privacy-policy"
+UBUNTU_CODENAME=jammy
+===== KERNEL =====
+Linux raha-B450-I-AORUS-PRO-WIFI 6.8.0-110-generic #110~22.04.1-Ubuntu SMP PREEMPT_DYNAMIC Fri Mar 27 12:43:08 UTC  x86_64 x86_64 x86_64 GNU/Linux
+===== CPU =====
+Architecture:                            x86_64
+CPU op-mode(s):                          32-bit, 64-bit
+Address sizes:                           48 bits physical, 48 bits virtual
+Byte Order:                              Little Endian
+CPU(s):                                  12
+On-line CPU(s) list:                     0-11
+Vendor ID:                               AuthenticAMD
+Model name:                              AMD Ryzen 5 5600G with Radeon Graphics
+CPU family:                              25
+Model:                                   80
+Thread(s) per core:                      2
+Core(s) per socket:                      6
+Socket(s):                               1
+Stepping:                                0
+CPU max MHz:                             4464.0000
+CPU min MHz:                             400.0000
+BogoMIPS:                                7785.59
+Flags:                                   fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush mmx fxsr sse sse2 ht syscall nx mmxext fxsr_opt pdpe1gb rdtscp lm constant_tsc rep_good nopl nonstop_tsc cpuid extd_apicid aperfmperf rapl pni pclmulqdq monitor ssse3 fma cx16 sse4_1 sse4_2 x2apic movbe popcnt aes xsave avx f16c rdrand lahf_lm cmp_legacy extapic cr8_legacy abm sse4a misalignsse 3dnowprefetch osvw ibs skinit wdt tce topoext perfctr_core perfctr_nb bpext perfctr_llc mwaitx cpb cat_l3 cdp_l3 hw_pstate ssbd mba ibrs ibpb stibp vmmcall fsgsbase bmi1 avx2 smep bmi2 erms invpcid cqm rdt_a rdseed adx smap clflushopt clwb sha_ni xsaveopt xsavec xgetbv1 xsaves cqm_llc cqm_occup_llc cqm_mbm_total cqm_mbm_local user_shstk clzero irperf xsaveerptr rdpru wbnoinvd cppc arat npt lbrv svm_lock nrip_save tsc_scale vmcb_clean flushbyasid decodeassists pausefilter pfthreshold avic v_vmsave_vmload vgif v_spec_ctrl umip pku ospke vaes vpclmulqdq rdpid overflow_recov succor smca fsrm debug_swap ibpb_exit_to_user
+L1d cache:                               192 KiB (6 instances)
+L1i cache:                               192 KiB (6 instances)
+L2 cache:                                3 MiB (6 instances)
+L3 cache:                                16 MiB (1 instance)
+NUMA node(s):                            1
+NUMA node0 CPU(s):                       0-11
+Vulnerability Gather data sampling:      Not affected
+Vulnerability Indirect target selection: Not affected
+Vulnerability Itlb multihit:             Not affected
+Vulnerability L1tf:                      Not affected
+Vulnerability Mds:                       Not affected
+Vulnerability Meltdown:                  Not affected
+Vulnerability Mmio stale data:           Not affected
+Vulnerability Reg file data sampling:    Not affected
+Vulnerability Retbleed:                  Not affected
+Vulnerability Spec rstack overflow:      Mitigation; Safe RET
+Vulnerability Spec store bypass:         Mitigation; Speculative Store Bypass disabled via prctl
+Vulnerability Spectre v1:                Mitigation; usercopy/swapgs barriers and __user pointer sanitization
+Vulnerability Spectre v2:                Mitigation; Retpolines; IBPB conditional; IBRS_FW; STIBP always-on; RSB filling; PBRSB-eIBRS Not affected; BHI Not affected
+Vulnerability Srbds:                     Not affected
+Vulnerability Tsa:                       Mitigation; Clear CPU buffers
+Vulnerability Tsx async abort:           Not affected
+Vulnerability Vmscape:                   Mitigation; IBPB before exit to userspace
+===== RAM =====
+               total        used        free      shared  buff/cache   available
+Mem:           7.6Gi       3.0Gi       2.3Gi        13Mi       2.3Gi       4.3Gi
+Swap:           11Gi          0B        11Gi
+===== DISK =====
+NAME   FSTYPE   FSVER LABEL      UUID                                 FSAVAIL FSUSE% MOUNTPOINTS
+loop0  squashfs 4.0                                                         0   100% /snap/core22/1612
+loop1  squashfs 4.0                                                         0   100% /snap/bare/5
+loop2  squashfs 4.0                                                         0   100% /snap/core22/2411
+loop3  squashfs 4.0                                                         0   100% /snap/core24/1587
+loop4  squashfs 4.0                                                         0   100% /snap/firefox/4848
+loop5  squashfs 4.0                                                         0   100% /snap/curl/2393
+loop6  squashfs 4.0                                                         0   100% /snap/gnome-42-2204/176
+loop7  squashfs 4.0                                                         0   100% /snap/gtk-common-themes/1535
+loop8  squashfs 4.0                                                         0   100% /snap/gnome-46-2404/153
+loop9  squashfs 4.0                                                         0   100% /snap/mesa-2404/1165
+loop10 squashfs 4.0                                                         0   100% /snap/snap-store/1113
+loop11 squashfs 4.0                                                         0   100% /snap/snap-store/1216
+loop12 squashfs 4.0                                                         0   100% /snap/snapd/21759
+loop13 squashfs 4.0                                                         0   100% /snap/snapd-desktop-integration/178
+loop14 squashfs 4.0                                                         0   100% /snap/snapd-desktop-integration/361
+sda                                                                                  
+├─sda1 ntfs           New Volume 6E4E69CD4E698F21                                    
+├─sda2 ext4     1.0              0986ce3d-c616-446d-af90-ecd0c5172b94  319.8G     7% /
+└─sda3 swap     1                999f1678-6d1a-43bc-8144-99e27d066403                [SWAP]
+sdb                                                                                  
+├─sdb1 vfat     FAT32            4ECA-7A89                              58.6M    39% /boot/efi
+├─sdb2                                                                               
+├─sdb3 ntfs                      0A96D5AE96D59A91                                    
+└─sdb4 ntfs                      626ADFFC6ADFCAC5                                    
+sdc                                                                                  
+└─sdc1 exfat    1.0   USB        69F0-B298                             115.2G     0% /media/raha/USB
+===== GPU =====
+Tue Apr 28 22:37:11 2026       
++-----------------------------------------------------------------------------------------+
+| NVIDIA-SMI 580.126.09             Driver Version: 580.126.09     CUDA Version: 13.0     |
++-----------------------------------------+------------------------+----------------------+
+| GPU  Name                 Persistence-M | Bus-Id          Disp.A | Volatile Uncorr. ECC |
+| Fan  Temp   Perf          Pwr:Usage/Cap |           Memory-Usage | GPU-Util  Compute M. |
+|                                         |                        |               MIG M. |
+|=========================================+========================+======================|
+|   0  NVIDIA GeForce RTX 3060        Off |   00000000:01:00.0  On |                  N/A |
+|  0%   39C    P8             12W /  170W |     344MiB /  12288MiB |      4%      Default |
+|                                         |                        |                  N/A |
++-----------------------------------------+------------------------+----------------------+
+
++-----------------------------------------------------------------------------------------+
+| Processes:                                                                              |
+|  GPU   GI   CI              PID   Type   Process name                        GPU Memory |
+|        ID   ID                                                               Usage      |
+|=========================================================================================|
+|    0   N/A  N/A            1898      G   /usr/lib/xorg/Xorg                      109MiB |
+|    0   N/A  N/A            2068      G   /usr/bin/gnome-shell                     23MiB |
+|    0   N/A  N/A            6751      G   .../4848/usr/lib/firefox/firefox        157MiB |
++-----------------------------------------------------------------------------------------+
+===== PYTHON =====
+Python 3.10.12
+pip 26.0.1 from /home/raha/research/venv/lib/python3.10/site-packages/pip (python 3.10)
+===== PYTHON PACKAGES =====
+anyio==4.13.0
+argon2-cffi==25.1.0
+argon2-cffi-bindings==25.1.0
+arrow==1.4.0
+asttokens==3.0.1
+async-lru==2.3.0
+attrs==26.1.0
+babel==2.18.0
+beautifulsoup4==4.14.3
+bleach==6.3.0
+certifi==2026.4.22
+cffi==2.0.0
+charset-normalizer==3.4.7
+comm==0.2.3
+contourpy==1.3.2
+cuda-bindings==13.2.0
+cuda-pathfinder==1.5.3
+cuda-toolkit==13.0.2
+cycler==0.12.1
+debugpy==1.8.20
+decorator==5.2.1
+defusedxml==0.7.1
+exceptiongroup==1.3.1
+executing==2.2.1
+fastjsonschema==2.21.2
+filelock==3.29.0
+fonttools==4.62.1
+fqdn==1.5.1
+fsspec==2026.3.0
+h11==0.16.0
+httpcore==1.0.9
+httpx==0.28.1
+idna==3.13
+ipykernel==7.2.0
+ipython==8.39.0
+ipywidgets==8.1.8
+isoduration==20.11.0
+jedi==0.19.2
+Jinja2==3.1.6
+joblib==1.5.3
+json5==0.14.0
+jsonpointer==3.1.1
+jsonschema==4.26.0
+jsonschema-specifications==2025.9.1
+jupyter==1.1.1
+jupyter-console==6.6.3
+jupyter-events==0.12.1
+jupyter-lsp==2.3.1
+jupyter_client==8.8.0
+jupyter_core==5.9.1
+jupyter_server==2.17.0
+jupyter_server_terminals==0.5.4
+jupyterlab==4.5.6
+jupyterlab_pygments==0.3.0
+jupyterlab_server==2.28.0
+jupyterlab_widgets==3.0.16
+kiwisolver==1.5.0
+lark==1.3.1
+MarkupSafe==3.0.3
+matplotlib==3.10.9
+matplotlib-inline==0.2.1
+mistune==3.2.0
+mpmath==1.3.0
+nbclient==0.10.4
+nbconvert==7.17.1
+nbformat==5.10.4
+nest-asyncio==1.6.0
+networkx==3.4.2
+notebook==7.5.5
+notebook_shim==0.2.4
+numpy==2.2.6
+nvidia-cublas==13.1.0.3
+nvidia-cuda-cupti==13.0.85
+nvidia-cuda-nvrtc==13.0.88
+nvidia-cuda-runtime==13.0.96
+nvidia-cudnn-cu13==9.19.0.56
+nvidia-cufft==12.0.0.61
+nvidia-cufile==1.15.1.6
+nvidia-curand==10.4.0.35
+nvidia-cusolver==12.0.4.66
+nvidia-cusparse==12.6.3.3
+nvidia-cusparselt-cu13==0.8.0
+nvidia-nccl-cu13==2.28.9
+nvidia-nvjitlink==13.0.88
+nvidia-nvshmem-cu13==3.4.5
+nvidia-nvtx==13.0.85
+overrides==7.7.0
+packaging==26.2
+pandas==2.3.3
+pandocfilters==1.5.1
+parso==0.8.6
+pexpect==4.9.0
+pillow==12.2.0
+platformdirs==4.9.6
+prometheus_client==0.25.0
+prompt_toolkit==3.0.52
+psutil==7.2.2
+ptyprocess==0.7.0
+pure_eval==0.2.3
+pycparser==3.0
+Pygments==2.20.0
+pyparsing==3.3.2
+python-dateutil==2.9.0.post0
+python-json-logger==4.1.0
+pytz==2026.1.post1
+PyYAML==6.0.3
+pyzmq==27.1.0
+referencing==0.37.0
+requests==2.33.1
+rfc3339-validator==0.1.4
+rfc3986-validator==0.1.1
+rfc3987-syntax==1.1.0
+rpds-py==0.30.0
+scikit-learn==1.7.2
+scipy==1.15.3
+Send2Trash==2.1.0
+six==1.17.0
+soupsieve==2.8.3
+stack-data==0.6.3
+sympy==1.14.0
+terminado==0.18.1
+threadpoolctl==3.6.0
+tinycss2==1.4.0
+tomli==2.4.1
+torch==2.11.0
+torchaudio==2.11.0
+torchvision==0.26.0
+tornado==6.5.5
+traitlets==5.14.3
+triton==3.6.0
+typing_extensions==4.15.0
+tzdata==2026.2
+uri-template==1.3.0
+urllib3==2.6.3
+wcwidth==0.6.0
+webcolors==25.10.0
+webencodings==0.5.1
+websocket-client==1.9.0
+widgetsnbextension==4.0.15
