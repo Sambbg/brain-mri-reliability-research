@@ -106,3 +106,45 @@ Therefore, D1 should be used only as a development/source dataset after deduplic
 Important caveat:
 
 pHash near-duplicate detection can produce false positives, especially for structurally similar MRI slices. However, the number of cross-split near-duplicate pairs is large enough that the original split should be considered high risk unless manually reviewed or replaced by a cleaner split strategy.
+
+
+
+
+
+## Leakage-Aware Split Result
+
+A leakage-aware split was created from the exact-deduplicated perceptual-hash manifest.
+
+Split construction used:
+
+- Input manifest: `data/processed/D1_manifest_deduplicated_phash.csv`
+- Output split file: `data/splits/D1_leakage_aware_split.csv`
+- Random seed: 42
+- pHash Hamming distance threshold: `<= 4`
+- Target split proportions: 70% train, 15% validation, 15% test
+
+Results:
+
+| Item | Count |
+|---|---:|
+| Rows assigned | 7,013 |
+| Leakage groups created | 4,755 |
+| Largest leakage group size | 24 |
+| Mixed-label leakage groups | 25 |
+| Cross-split near-duplicate pairs after splitting | 0 |
+
+Assigned split counts:
+
+| Split | Count |
+|---|---:|
+| Train | 4,909 |
+| Validation | 1,053 |
+| Test | 1,051 |
+
+Interpretation:
+
+This leakage-aware split should be preferred over the original Kaggle Training/Testing folders for internal D1 experiments. The original split showed substantial pHash-based cross-split near-duplicate risk, whereas the new split groups near-duplicate images before assigning train, validation, and test partitions.
+
+Caveat:
+
+This split reduces detected pHash-based leakage, but it does not prove patient-level independence because patient identifiers are unavailable.
