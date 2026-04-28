@@ -55,3 +55,29 @@ brain-tumor-mri-dataset/
     ├── meningioma/
     ├── notumor/
     └── pituitary/
+
+
+## Exact Duplicate Audit Result
+
+An exact SHA256 duplicate audit was performed after manifest generation.
+
+Results:
+
+| Item | Count |
+|---|---:|
+| Original manifest rows | 7,200 |
+| Unique SHA256 hashes | 7,013 |
+| Duplicate hash groups | 153 |
+| Images involved in duplicate groups | 340 |
+| Cross-split duplicate groups | 0 |
+| Cross-class duplicate groups | 0 |
+| Rows removed in deduplicated manifest | 187 |
+| Deduplicated manifest rows | 7,013 |
+
+Interpretation:
+
+No exact SHA256 duplicates were found across Training and Testing folders, so there is no exact hash-level evidence of train-test leakage. However, 187 duplicate rows were removed from the dataset, confirming repeated-image bias within the dataset. The deduplicated manifest should be preferred for future training and evaluation.
+
+The class most affected was the Training `notumor` class, which decreased from 1,400 to 1,281 images after exact deduplication. This confirms that the original perfect class balance was partly artificial and should not be treated as evidence of dataset quality.
+
+
