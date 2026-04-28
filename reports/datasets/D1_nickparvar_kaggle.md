@@ -81,3 +81,28 @@ No exact SHA256 duplicates were found across Training and Testing folders, so th
 The class most affected was the Training `notumor` class, which decreased from 1,400 to 1,281 images after exact deduplication. This confirms that the original perfect class balance was partly artificial and should not be treated as evidence of dataset quality.
 
 
+## Near-Duplicate Audit Result
+
+A perceptual-hash near-duplicate audit was performed on the exact-deduplicated D1 manifest using pHash Hamming distance threshold `<= 4`.
+
+Results:
+
+| Item | Count |
+|---|---:|
+| Deduplicated rows compared | 7,013 |
+| Near-duplicate pairs found | 5,125 |
+| Cross-split near-duplicate pairs | 1,926 |
+| Cross-class near-duplicate pairs | 46 |
+| pHash distance 0 pairs | 1,447 |
+| pHash distance 2 pairs | 1,750 |
+| pHash distance 4 pairs | 1,928 |
+
+Interpretation:
+
+This is a serious leakage warning. The original D1 Training/Testing split cannot be treated as a clean independent evaluation split because many visually similar images occur across the original split boundary. Exact SHA256 checks did not detect cross-split duplicates, but perceptual hashing revealed substantial cross-split similarity.
+
+Therefore, D1 should be used only as a development/source dataset after deduplication and leakage-aware splitting. The original Kaggle Testing folder should not be used as strong evidence of generalisation.
+
+Important caveat:
+
+pHash near-duplicate detection can produce false positives, especially for structurally similar MRI slices. However, the number of cross-split near-duplicate pairs is large enough that the original split should be considered high risk unless manually reviewed or replaced by a cleaner split strategy.
