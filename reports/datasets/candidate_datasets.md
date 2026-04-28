@@ -14,13 +14,13 @@ At least two datasets are required before model training:
 ## Candidate Dataset Table
 
 ## Candidate Dataset Table
+## Candidate Dataset Table
 
 | ID | Dataset Name | Source Link | Classes | Approx. Size | License / Terms | Patient IDs Available? | Original Split? | Candidate Role | Leakage Risk | Decision |
 |---|---|---|---|---:|---|---|---|---|---|---|
 | D1 | Brain Tumor MRI Dataset / Nickparvar Kaggle | Kaggle: masoudnickparvar/brain-tumor-mri-dataset | Glioma, Meningioma, Pituitary, No Tumor | 7,023 images | Kaggle terms; license must be confirmed from dataset page | No clear patient IDs | Yes, train/test folders reported | Development source candidate | High | Use cautiously |
 | D2 | BRISC2025 | Kaggle + Figshare + Nature Scientific Data paper | Glioma, Meningioma, Pituitary, No Tumor; segmentation masks included | 6,000 T1-weighted MRI slices | Must confirm from Kaggle/Figshare page | No clear patient IDs from current summary | Yes, 5,000 train / 1,000 test reported | Curated target / segmentation-supported dataset | Medium-High | Use cautiously; possible source overlap with D1 |
-| D3 | Figshare Brain Tumor Dataset / Cheng | Figshare DOI: 10.6084/m9.figshare.1512427.v5 | Meningioma, Glioma, Pituitary | 3,064 T1-weighted contrast-enhanced images from 233 patients | CC BY 4.0 reported | Yes, 233 patients reported | Not safely assumed; must inspect metadata | Optional tumour-only external target | Medium | Candidate |
-## Minimum Dataset Pair Requirement
+| D3 | Figshare Brain Tumor Dataset / Cheng | Figshare DOI: 10.6084/m9.figshare.1512427.v5 | Meningioma, Glioma, Pituitary | 3,064 T1-weighted contrast-enhanced images from 233 patients | CC BY 4.0 reported | Yes, 233 patients reported | Not safely assumed; must inspect metadata | Optional tumour-only external target | Medium | Candidate |## Minimum Dataset Pair Requirement
 
 The first accepted pair must satisfy:
 
@@ -32,6 +32,7 @@ The first accepted pair must satisfy:
 - Obvious duplicates are checked before training.
 
 ## Notes
+## Initial Dataset Assessment Notes
 ## Initial Dataset Assessment Notes
 
 D1 is attractive because it contains four classes including "No Tumor", but it is high leakage risk because it is a heavily reused public 2D image dataset with unclear patient-level metadata.
