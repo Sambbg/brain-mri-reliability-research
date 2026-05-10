@@ -1,8 +1,9 @@
 from pathlib import Path
 import json
+
 import numpy as np
 import pandas as pd
-from sklearn.metrics import log_loss, brier_score_loss
+from sklearn.metrics import log_loss
 
 PRED_PATH = Path("experiments/E001_D1_resnet18_baseline/test_predictions.csv")
 OUT_DIR = Path("experiments/E001_D1_resnet18_baseline")
@@ -69,15 +70,54 @@ def multiclass_brier_score(y_true, probs, num_classes):
     return np.mean(np.sum((probs - y_onehot) ** 2, axis=1))
 
 
+def normalize_probabilities(probs):
+    """
+    Re-normalize probability rows after CSV loading.
+
+    Softmax probabilities written to CSV can have tiny floating-point row-sum
+    errors such as 0.999999999 or 1.000000001. sklearn.log_loss warns if rows
+    do not sum exactly to one. This function fixes that safely.
+    """
+    probs = np.asarray(probs, dtype=float)
+
+    if probs.ndim != 2:
+        raise ValueError(f"Expected 2D probability array, got shape: {probs.shape}")
+
+    row_sums = probs.sum(axis=1, keepdims=True)
+
+    if np.any(row_sums <= 0):
+        bad_rows = np.where(row_sums.squeeze() <= 0)[0]
+        raise ValueError(f"Probability rows with non-positive sums found: {bad_rows[:10]}")
+
+    return probs / row_sums
+
+
+def validate_prediction_file(df):
+    required_cols = ["true_index", "pred_index"] + PROB_COLS
+    missing = [col for col in required_cols if col not in df.columns]
+
+    if missing:
+        raise ValueError(f"Prediction file is missing required columns: {missing}")
+
+    if df.empty:
+        raise ValueError("Prediction file is empty.")
+
+
 def main():
     if not PRED_PATH.exists():
         raise FileNotFoundError(f"Predictions file not found: {PRED_PATH}")
 
     df = pd.read_csv(PRED_PATH)
+    validate_prediction_file(df)
 
-    y_true = df["true_index"].to_numpy()
-    y_pred = df["pred_index"].to_numpy()
-    probs = df[PROB_COLS].to_numpy()
+    y_true = df["true_index"].to_numpy(dtype=int)
+    y_pred = df["pred_index"].to_numpy(dtype=int)
+
+    raw_probs = df[PROB_COLS].to_numpy(dtype=float)
+    raw_row_sums = raw_probs.sum(axis=1)
+
+    probs = normalize_probabilities(raw_probs)
+    normalized_row_sums = probs.sum(axis=1)
 
     confidences = np.max(probs, axis=1)
 
@@ -109,6 +149,10 @@ def main():
         "brier_score": float(brier),
         "negative_log_likelihood": float(nll),
         "n_bins": N_BINS,
+        "raw_probability_row_sum_min": float(np.min(raw_row_sums)),
+        "raw_probability_row_sum_max": float(np.max(raw_row_sums)),
+        "normalized_probability_row_sum_min": float(np.min(normalized_row_sums)),
+        "normalized_probability_row_sum_max": float(np.max(normalized_row_sums)),
     }
 
     with metrics_json.open("w", encoding="utf-8") as f:
@@ -117,15 +161,27 @@ def main():
     REPORT_PATH.parent.mkdir(parents=True, exist_ok=True)
 
     with REPORT_PATH.open("w", encoding="utf-8") as f:
-        f.write("# E001 ? Calibration Evaluation Results\n\n")
+        f.write("# E001 - Calibration Evaluation Results\n\n")
 
         f.write("## Experiment\n\n")
-        f.write("E001 ? D1 ResNet18 internal leakage-aware baseline\n\n")
+        f.write("E001 - D1 ResNet18 internal leakage-aware baseline\n\n")
 
         f.write("## Input\n\n")
         f.write(f"- Prediction file: `{PRED_PATH}`\n")
         f.write(f"- Samples evaluated: {len(df)}\n")
         f.write(f"- Number of reliability bins: {N_BINS}\n\n")
+
+        f.write("## Probability Normalization Check\n\n")
+        f.write(
+            "Softmax probabilities were re-normalized after CSV loading to avoid "
+            "minor floating-point row-sum warnings during NLL calculation.\n\n"
+        )
+        f.write("| Quantity | Value |\n")
+        f.write("|---|---:|\n")
+        f.write(f"| Raw probability row-sum minimum | {np.min(raw_row_sums):.10f} |\n")
+        f.write(f"| Raw probability row-sum maximum | {np.max(raw_row_sums):.10f} |\n")
+        f.write(f"| Normalized probability row-sum minimum | {np.min(normalized_row_sums):.10f} |\n")
+        f.write(f"| Normalized probability row-sum maximum | {np.max(normalized_row_sums):.10f} |\n\n")
 
         f.write("## Calibration Metrics\n\n")
         f.write("| Metric | Value |\n")
@@ -160,10 +216,34 @@ def main():
 
         f.write("\n## Interpretation\n\n")
         f.write(
-            "This calibration evaluation measures whether the ResNet18 model's predicted confidence "
-            "matches empirical correctness on the leakage-aware D1 test split. These results are still "
-            "internal to D1 and should not be interpreted as external reliability evidence. The next step "
-            "is to apply post-hoc calibration, especially temperature scaling, using the validation set only.\n"
+            "This calibration evaluation measures whether the ResNet18 model's predicted "
+            "confidence matches empirical correctness on the leakage-aware D1 test split. "
+            "The model is evaluated using raw softmax probabilities without post-hoc "
+            "temperature scaling. These results are still internal to D1 and should not be "
+            "interpreted as external reliability evidence.\n\n"
+        )
+
+        if confidence_accuracy_gap > 0:
+            f.write(
+                f"The model is slightly overconfident on this internal test set: mean "
+                f"confidence is {mean_confidence:.4f}, while accuracy is {accuracy:.4f}. "
+                f"The confidence-accuracy gap is {confidence_accuracy_gap:.4f}.\n\n"
+            )
+        elif confidence_accuracy_gap < 0:
+            f.write(
+                f"The model is slightly underconfident on this internal test set: mean "
+                f"confidence is {mean_confidence:.4f}, while accuracy is {accuracy:.4f}. "
+                f"The confidence-accuracy gap is {confidence_accuracy_gap:.4f}.\n\n"
+            )
+        else:
+            f.write(
+                "Mean confidence and accuracy are equal at the reported precision.\n\n"
+            )
+
+        f.write(
+            "The next step is to apply post-hoc calibration, especially temperature "
+            "scaling, using the validation set only, then evaluate the calibrated model "
+            "on the held-out test set.\n"
         )
 
     print("Calibration metrics:")

@@ -1,14 +1,25 @@
-# E001 ? Calibration Evaluation Results
+# E001 - Calibration Evaluation Results
 
 ## Experiment
 
-E001 ? D1 ResNet18 internal leakage-aware baseline
+E001 - D1 ResNet18 internal leakage-aware baseline
 
 ## Input
 
 - Prediction file: `experiments/E001_D1_resnet18_baseline/test_predictions.csv`
 - Samples evaluated: 1051
 - Number of reliability bins: 15
+
+## Probability Normalization Check
+
+Softmax probabilities were re-normalized after CSV loading to avoid minor floating-point row-sum warnings during NLL calculation.
+
+| Quantity | Value |
+|---|---:|
+| Raw probability row-sum minimum | 0.9999998706 |
+| Raw probability row-sum maximum | 1.0000001394 |
+| Normalized probability row-sum minimum | 1.0000000000 |
+| Normalized probability row-sum maximum | 1.0000000000 |
 
 ## Calibration Metrics
 
@@ -43,4 +54,8 @@ E001 ? D1 ResNet18 internal leakage-aware baseline
 
 ## Interpretation
 
-This calibration evaluation measures whether the ResNet18 model's predicted confidence matches empirical correctness on the leakage-aware D1 test split. These results are still internal to D1 and should not be interpreted as external reliability evidence. The next step is to apply post-hoc calibration, especially temperature scaling, using the validation set only.
+This calibration evaluation measures whether the ResNet18 model's predicted confidence matches empirical correctness on the leakage-aware D1 test split. The model is evaluated using raw softmax probabilities without post-hoc temperature scaling. These results are still internal to D1 and should not be interpreted as external reliability evidence.
+
+The model is slightly overconfident on this internal test set: mean confidence is 0.9836, while accuracy is 0.9667. The confidence-accuracy gap is 0.0169.
+
+The next step is to apply post-hoc calibration, especially temperature scaling, using the validation set only, then evaluate the calibrated model on the held-out test set.
