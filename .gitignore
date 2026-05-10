@@ -19,3 +19,9 @@ models/*
 # Logs and experiment outputs may become large
 logs/training/*
 results/*
+
+# Experiment runtime outputs
+experiments/*/
+
+# Keep experiment directory structure if needed
+!experiments/.gitkeep
