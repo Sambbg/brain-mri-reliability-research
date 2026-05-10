@@ -1,4 +1,4 @@
-# D2 Acquisition Log ? BRISC2025
+# D2 Acquisition Log - BRISC2025
 
 ## Acquisition Date
 2026-05-10
