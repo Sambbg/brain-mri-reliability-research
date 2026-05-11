@@ -8,9 +8,11 @@ attrs==26.1.0
 babel==2.18.0
 beautifulsoup4==4.14.3
 bleach==6.3.0
+bs4==0.0.2
 certifi==2026.4.22
 cffi==2.0.0
 charset-normalizer==3.4.7
+click==8.3.3
 comm==0.2.3
 contourpy==1.3.2
 cuda-bindings==13.2.0
@@ -20,6 +22,7 @@ cycler==0.12.1
 debugpy==1.8.20
 decorator==5.2.1
 defusedxml==0.7.1
+duckdb==1.5.2
 exceptiongroup==1.3.1
 executing==2.2.1
 fastjsonschema==2.21.2
@@ -30,6 +33,8 @@ fsspec==2026.3.0
 h11==0.16.0
 httpcore==1.0.9
 httpx==0.28.1
+idc-index==0.12.3
+idc-index-data==24.2.0
 idna==3.13
 ImageHash==4.3.2
 ipykernel==7.2.0
@@ -63,6 +68,7 @@ matplotlib==3.10.9
 matplotlib-inline==0.2.1
 mistune==3.2.0
 mpmath==1.3.0
+narwhals==2.21.0
 nbclient==0.10.4
 nbconvert==7.17.1
 nbformat==5.10.4
@@ -88,19 +94,22 @@ nvidia-nvshmem-cu13==3.4.5
 nvidia-nvtx==13.0.85
 overrides==7.7.0
 packaging==26.2
-pandas==2.3.3
+pandas==2.2.3
 pandocfilters==1.5.1
 parso==0.8.6
 pexpect==4.9.0
 pillow==12.2.0
 platformdirs==4.9.6
+plotly==6.7.0
 prometheus_client==0.25.0
 prompt_toolkit==3.0.52
 protobuf==7.34.1
 psutil==7.2.2
 ptyprocess==0.7.0
 pure_eval==0.2.3
+pyarrow==24.0.0
 pycparser==3.0
+pydicom==3.0.2
 Pygments==2.20.0
 pyparsing==3.3.2
 python-dateutil==2.9.0.post0
@@ -116,6 +125,7 @@ rfc3339-validator==0.1.4
 rfc3986-validator==0.1.1
 rfc3987-syntax==1.1.0
 rpds-py==0.30.0
+s5cmd==0.3.3
 scikit-learn==1.7.2
 scipy==1.15.3
 Send2Trash==2.1.0
@@ -123,6 +133,7 @@ six==1.17.0
 soupsieve==2.8.3
 stack-data==0.6.3
 sympy==1.14.0
+tcia_utils==3.3.1
 terminado==0.18.1
 text-unidecode==1.3
 threadpoolctl==3.6.0
@@ -137,6 +148,7 @@ traitlets==5.14.3
 triton==3.6.0
 typing_extensions==4.15.0
 tzdata==2026.2
+Unidecode==1.4.0
 uri-template==1.3.0
 urllib3==2.6.3
 wcwidth==0.6.0
