@@ -1,4 +1,4 @@
-# Beyond Accuracy: Calibration and Cross-Dataset Reliability in Brain MRI Tumour Classification
+# Evaluating Calibration, Uncertainty, and Cross-Dataset Reliability in Brain MRI Tumour Classification
 
 ## Academic Project Information
 
@@ -9,7 +9,7 @@
 
 ## Research Title
 
-**Beyond Accuracy: Calibration and Cross-Dataset Reliability in Brain MRI Tumour Classification**
+**Evaluating Calibration, Uncertainty, and Cross-Dataset Reliability in Brain MRI Tumour Classification**
 
 ## Abstract
 
