@@ -112,7 +112,7 @@ def write_report(temperature, raw_metrics, scaled_metrics):
 
         f.write("## Experiment\n\n")
         f.write(
-            "E002 ResNet18 trained on D1, evaluated on D3B ICDC-Glioma central slices. "
+            "E002 EfficientNet-B0 trained on D1, evaluated on D3B ICDC-Glioma central slices. "
             "The temperature value was learned previously using the D1 validation set only.\n\n"
         )
 
