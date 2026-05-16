@@ -34,6 +34,7 @@ data_loading:
   image_size: 224
   batch_size: 32
   num_workers: 4
+  pin_memory: true
 optimizer:
   name: adamw
   learning_rate: 0.0001
