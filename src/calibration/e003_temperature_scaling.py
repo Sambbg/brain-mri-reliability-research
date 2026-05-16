@@ -14,11 +14,11 @@ from PIL import Image
 from sklearn.metrics import accuracy_score, f1_score, balanced_accuracy_score, log_loss
 
 
-CONFIG_PATH = Path("configs/E003_D1_vit_b_16_baseline.yaml")
+CONFIG_PATH = Path("configs/E003_D1_vit_b16_baseline.yaml")
 SPLIT_CSV = Path("data/splits/D1_leakage_aware_split.csv")
-CHECKPOINT_PATH = Path("experiments/E003_D1_vit_b_16_baseline/best_model.pt")
+CHECKPOINT_PATH = Path("experiments/E003_D1_vit_b16_baseline/best_model.pt")
 
-OUT_DIR = Path("experiments/E003_D1_vit_b_16_baseline")
+OUT_DIR = Path("experiments/E003_D1_vit_b16_baseline")
 REPORT_PATH = Path("reports/experiments/E003_D1_temperature_scaling_results.md")
 
 IMAGE_SIZE = 224
@@ -374,7 +374,7 @@ def main():
 
     result = {
         "experiment": "E003_temperature_scaling",
-        "base_experiment": "E003_D1_vit_b_16_baseline",
+        "base_experiment": "E003_D1_vit_b16_baseline",
         "git_commit_hash": git_hash,
         "temperature_fitted_on": "validation_split_only",
         "learned_temperature": temperature,
