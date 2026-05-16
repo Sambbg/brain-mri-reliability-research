@@ -27,7 +27,7 @@ from sklearn.metrics import (
 )
 
 
-CONFIG_PATH = Path("configs/E003_D1_vit_b_16_baseline.yaml")
+CONFIG_PATH = Path("configs/E003_D1_vit_b16_baseline.yaml")
 
 CLASS_TO_INDEX = {
     "glioma": 0,
