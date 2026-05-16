@@ -5,11 +5,11 @@ from collections import Counter
 import numpy as np
 import pandas as pd
 
-PREDICTIONS_CSV = Path("experiments/E003_D1_efficientnet_b0_baseline/d3b_predictions.csv")
-TEMP_METRICS_JSON = Path("experiments/E003_D1_efficientnet_b0_baseline/temperature_scaling_metrics.json")
+PREDICTIONS_CSV = Path("experiments/E003_D1_vit_b16_baseline/d3b_predictions.csv")
+TEMP_METRICS_JSON = Path("experiments/E003_D1_vit_b16_baseline/temperature_scaling_metrics.json")
 
-OUT_PREDICTIONS_CSV = Path("experiments/E003_D1_efficientnet_b0_baseline/d3b_temperature_scaled_predictions.csv")
-OUT_METRICS_JSON = Path("experiments/E003_D1_efficientnet_b0_baseline/d3b_temperature_scaled_metrics.json")
+OUT_PREDICTIONS_CSV = Path("experiments/E003_D1_vit_b16_baseline/d3b_temperature_scaled_predictions.csv")
+OUT_METRICS_JSON = Path("experiments/E003_D1_vit_b16_baseline/d3b_temperature_scaled_metrics.json")
 REPORT_PATH = Path("reports/experiments/E003_D3B_temperature_scaled_results.md")
 
 CLASS_NAMES = ["glioma", "meningioma", "notumor", "pituitary"]
