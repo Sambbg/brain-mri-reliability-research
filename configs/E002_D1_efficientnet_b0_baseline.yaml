@@ -1,21 +1,18 @@
 experiment_id: E002
 experiment_name: D1_internal_leakage_aware_efficientnet_b0_baseline
-
 dataset:
   dataset_id: D1
   split_csv: data/splits/D1_leakage_aware_split.csv
   image_root: .
   class_names:
-    - glioma
-    - meningioma
-    - notumor
-    - pituitary
-
+  - glioma
+  - meningioma
+  - notumor
+  - pituitary
 model:
   architecture: efficientnet_b0
   pretrained: true
   num_classes: 4
-
 training:
   image_size: 224
   batch_size: 32
@@ -27,8 +24,8 @@ training:
   scheduler: cosine
   num_workers: 4
   seed: 42
-
 outputs:
   experiment_dir: experiments/E002_D1_efficientnet_b0_baseline
   save_best_model: true
   monitor_metric: val_macro_f1
+  output_dir: experiments/E002_D1_efficientnet_b0_baseline
