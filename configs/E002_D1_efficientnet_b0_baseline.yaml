@@ -1,5 +1,3 @@
-experiment_id: E002
-experiment_name: D1_internal_leakage_aware_efficientnet_b0_baseline
 dataset:
   dataset_id: D1
   split_csv: data/splits/D1_leakage_aware_split.csv
@@ -29,3 +27,6 @@ outputs:
   save_best_model: true
   monitor_metric: val_macro_f1
   output_dir: experiments/E002_D1_efficientnet_b0_baseline
+experiment:
+  id: E002
+  name: D1_internal_leakage_aware_efficientnet_b0_baseline
