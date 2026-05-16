@@ -23,6 +23,9 @@ training:
   num_workers: 4
   seed: 42
   epochs: 20
+  early_stopping:
+    enabled: true
+    patience: 5
 outputs:
   experiment_dir: experiments/E002_D1_efficientnet_b0_baseline
   save_best_model: true
