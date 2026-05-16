@@ -22,6 +22,7 @@ training:
   scheduler: cosine
   num_workers: 4
   seed: 42
+  epochs: 20
 outputs:
   experiment_dir: experiments/E002_D1_efficientnet_b0_baseline
   save_best_model: true
