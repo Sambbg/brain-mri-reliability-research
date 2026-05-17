@@ -104,7 +104,7 @@ D3B, derived from ICDC-Glioma, was therefore selected as a visually distinct gli
 
 Three architectures were trained and evaluated on the D1 leakage-aware split: ResNet18, EfficientNet-B0, and ViT-B/16.
 
-All three models achieved strong internal test performance. ResNet18 achieved a test macro-F1 of 0.9666. EfficientNet-B0 achieved the strongest internal result, with a test macro-F1 of 0.9680. ViT-B/16 achieved a lower but still high test macro-F1 of 0.9582.
+All three models achieved strong internal test performance (Table 2; Figure 2). ResNet18 achieved a test macro-F1 of 0.9666. EfficientNet-B0 achieved the strongest internal result, with a test macro-F1 of 0.9680. ViT-B/16 achieved a lower but still high test macro-F1 of 0.9582.
 
 These findings show that high internal classification performance is achievable even after duplicate-aware splitting. However, internal performance alone does not establish cross-dataset reliability.
 
@@ -112,7 +112,7 @@ These findings show that high internal classification performance is achievable 
 
 Before temperature scaling, all three models showed mild overconfidence on the D1 test set. ResNet18 had a confidence-accuracy gap of 0.0169, EfficientNet-B0 had a gap of 0.0135, and ViT-B/16 had a gap of 0.0159.
 
-Post-hoc temperature scaling improved internal calibration for all three models without changing accuracy or macro-F1. ResNet18 ECE decreased from 0.0193 to 0.0145. EfficientNet-B0 ECE decreased from 0.0186 to 0.0152. ViT-B/16 ECE decreased from 0.0198 to 0.0109.
+Post-hoc temperature scaling improved internal calibration for all three models without changing accuracy or macro-F1 (Table 3; Figure 3). ResNet18 ECE decreased from 0.0208 to 0.0145. EfficientNet-B0 ECE decreased from 0.0186 to 0.0152. ViT-B/16 ECE decreased from 0.0198 to 0.0109.
 
 These results show that temperature scaling improved confidence calibration on the internal D1 distribution. However, this improvement does not necessarily imply robustness to dataset shift.
 
@@ -120,13 +120,13 @@ These results show that temperature scaling improved confidence calibration on t
 
 All three D1-trained models showed unstable prediction behaviour on D3B.
 
-ResNet18 predicted glioma for only 29.43% of D3B slices and 26.42% of patients by majority vote. EfficientNet-B0 performed better, predicting glioma for 44.15% of slices and 47.17% of patients by majority vote. ViT-B/16 predicted glioma for 40.38% of slices and 37.74% of patients by majority vote.
+ResNet18 predicted glioma for only 29.43% of D3B slices and 26.42% of patients by majority vote (Table 4; Figure 4). EfficientNet-B0 performed better, predicting glioma for 44.15% of slices and 47.17% of patients by majority vote. ViT-B/16 predicted glioma for 40.38% of slices and 37.74% of patients by majority vote. The full D3B prediction distribution is shown in Figure 5.
 
 Although EfficientNet-B0 showed the strongest D3B glioma recognition among the tested models, none of the models predicted glioma for a majority of D3B slices. This indicates that high internal D1 performance did not translate into stable glioma-domain behaviour on visually distinct D3B images.
 
 ### 3.5 Temperature scaling under D3B shift
 
-Temperature scaling softened model confidence under D3B shift for all three architectures. Mean maximum confidence decreased and entropy increased after applying the learned temperature values.
+Temperature scaling softened model confidence under D3B shift for all three architectures (Table 5; Figure 6). Mean maximum confidence decreased and entropy increased after applying the learned temperature values.
 
 However, temperature scaling did not change the predicted class distribution or patient-majority predictions. This is important because it shows that the D3B failure was not merely a calibration problem. The unstable prediction distribution reflects domain-shift sensitivity in the learned representations.
 
@@ -193,3 +193,8 @@ The results also show that calibration and domain-shift robustness are different
 A major methodological finding was that one candidate external dataset, D2, could not be treated as clean independent evidence because it showed substantial overlap with D1. This highlights the importance of dataset overlap auditing before making external validation claims.
 
 The strongest defensible conclusion is that brain MRI tumour classifiers should not be judged by internal accuracy alone. Reliability-focused evaluation requires duplicate-aware splitting, dataset independence checks, calibration assessment, and domain-shift testing. Without these steps, reported performance may overstate the real reliability of medical image classification models.
+
+
+## Manuscript Assets
+
+Generated manuscript-ready tables are stored in `reports/experiments/tables/`. Generated figures are stored in `reports/experiments/figures/`. Captions are stored in `reports/experiments/figure_captions.md` and `reports/experiments/table_captions.md`.
