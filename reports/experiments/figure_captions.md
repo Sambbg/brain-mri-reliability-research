@@ -1,5 +1,10 @@
 # Figure Captions
 
+## Figure 1. Reliability-first evaluation pipeline
+
+Overview of the study workflow, including D1 manifest creation, duplicate auditing, leakage-aware splitting, model training, internal evaluation, calibration analysis, candidate external dataset auditing, D2 rejection, D3B construction, D3B domain-shift evaluation, and cross-model reliability comparison.
+
+
 ## Figure 2. Internal D1 test macro-F1 across models
 
 Comparison of test macro-F1 for ResNet18, EfficientNet-B0, and ViT-B/16 on the D1 leakage-aware test split. All models achieved high internal performance, with EfficientNet-B0 performing slightly best and ViT-B/16 performing lowest among the three models.

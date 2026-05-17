@@ -34,7 +34,7 @@ The central research question is whether high-performing brain MRI tumour classi
 
 ### 2.1 Study design
 
-This study used a reliability-focused experimental design to evaluate brain MRI tumour classification models beyond internal accuracy. The evaluation pipeline included leakage-aware dataset preparation, duplicate and overlap auditing, internal model evaluation, calibration analysis, post-hoc temperature scaling, and glioma-focused domain-shift testing.
+This study used a reliability-focused experimental design to evaluate brain MRI tumour classification models beyond internal accuracy (Figure 1). The evaluation pipeline included leakage-aware dataset preparation, duplicate and overlap auditing, internal model evaluation, calibration analysis, post-hoc temperature scaling, and glioma-focused domain-shift testing.
 
 Three model architectures were evaluated:
 
