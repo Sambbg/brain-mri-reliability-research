@@ -18,6 +18,8 @@
 
 ## Summary Figures
 
+- `reports/experiments/figures/figure_1_reliability_pipeline.png`
+- `reports/experiments/figures/figure_1_reliability_pipeline.pdf`
 - `reports/experiments/figures/figure_2_internal_macro_f1.png`
 - `reports/experiments/figures/figure_3_internal_ece_before_after.png`
 - `reports/experiments/figures/figure_4_d3b_glioma_prediction_rate.png`
