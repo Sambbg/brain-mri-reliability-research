@@ -73,3 +73,21 @@ Avoid:
 | CLAIM-CAL-002 | Temperature scaling is a simple post-hoc calibration method fitted using validation logits. | REF-CAL-001 |
 | CLAIM-CAL-003 | Expected calibration error is a standard summary measure of calibration mismatch. | REF-CAL-001; REF-CAL-002 |
 | CLAIM-CAL-004 | Brier score can be used to evaluate probabilistic prediction quality. | REF-CAL-003 |
+
+## Verified Dataset Leakage and Overlap References
+
+| ID | Area | Search query | Database / source | Inclusion criteria | Exclusion criteria | Candidate paper title | DOI / URL | Why it is useful | Manuscript section | Status |
+|---|---|---|---|---|---|---|---|---|---|---|
+| REF-LEAK-001 | Dataset leakage and radiology data handling | radiology machine learning data handling patient level split leakage | Radiology: Artificial Intelligence / PMC | Radiology-specific paper discussing data handling, splitting, and bias | Non-medical or non-radiology leakage examples only | Mitigating Bias in Radiology Machine Learning: 1. Data Handling | https://pmc.ncbi.nlm.nih.gov/articles/PMC9533091/ | Supports leakage prevention, patient-level splitting, and careful medical imaging data handling | Introduction / Methods / Discussion | Verified |
+| REF-LEAK-002 | Data leakage and inflated medical imaging performance | inflation test accuracy data leakage deep learning OCT images | Scientific Data / Nature | Medical imaging study directly quantifying performance inflation from improper splitting | Non-peer-reviewed summaries | Inflation of test accuracy due to data leakage in deep learning-based classification of OCT images | https://www.nature.com/articles/s41597-022-01618-6 | Supports the claim that improper splitting can substantially inflate medical imaging model performance | Introduction / Discussion | Verified |
+| REF-LEAK-003 | Brain MRI leakage | brain MRI classification data leakage 2D CNN | Frontiers / PMC | Brain MRI-specific study on data leakage in 2D CNN classification | Papers unrelated to MRI | Effect of data leakage in brain MRI classification using 2D convolutional neural networks | https://pmc.ncbi.nlm.nih.gov/articles/PMC8604922/ | Directly supports the relevance of leakage-aware evaluation in brain MRI classification | Introduction / Methods / Discussion | Verified |
+| REF-LEAK-004 | Leakage-aware splitting | information leakage data splitting machine learning DataSAIL | PMC | General method paper focused on splitting to avoid information leakage | Opinion pieces or blogs | Data splitting to avoid information leakage with DataSAIL | https://pmc.ncbi.nlm.nih.gov/articles/PMC11978981/ | Supports the broader principle that splitting strategy is essential to prevent information leakage and memorisation | Methods / Discussion | Verified |
+
+## Dataset Leakage Manuscript Claim Mapping
+
+| Claim ID | Manuscript claim | Supporting reference |
+|---|---|---|
+| CLAIM-LEAK-001 | Medical imaging ML performance can be inflated when related images or patients leak across train/test splits. | REF-LEAK-001; REF-LEAK-002; REF-LEAK-003 |
+| CLAIM-LEAK-002 | Patient-level or group-level splitting is important for reducing leakage in radiology ML. | REF-LEAK-001; REF-LEAK-003 |
+| CLAIM-LEAK-003 | Public datasets require overlap auditing before being treated as independent validation sets. | REF-LEAK-001; REF-LEAK-004 |
+| CLAIM-LEAK-004 | D2 should not be used as clean external validation after substantial exact and perceptual overlap with D1 was detected. | REF-LEAK-001; REF-LEAK-002; REF-LEAK-003 |
