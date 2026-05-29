@@ -144,3 +144,22 @@ Avoid:
 | CLAIM-REPORT-002 | Prediction model studies using machine learning should report model development and evaluation clearly. | REF-REPORT-002 |
 | CLAIM-REPORT-003 | This study should be interpreted as retrospective experimental evaluation, not clinical deployment evidence. | REF-REPORT-001; REF-REPORT-002 |
 | CLAIM-REPORT-004 | Future clinical translation would require prospective clinical evaluation and appropriate clinical-trial reporting standards. | REF-REPORT-003 |
+
+## Verified Uncertainty-Aware Medical Imaging References
+
+| ID | Area | Search query | Database / source | Inclusion criteria | Exclusion criteria | Candidate paper title | DOI / URL | Why it is useful | Manuscript section | Status |
+|---|---|---|---|---|---|---|---|---|---|---|
+| REF-UNC-001 | Monte Carlo dropout / Bayesian approximation | Monte Carlo dropout Bayesian approximation uncertainty deep learning Gal Ghahramani | ICML / PMLR | Foundational method paper for dropout-based approximate Bayesian uncertainty | Secondary summaries only | Dropout as a Bayesian Approximation: Representing Model Uncertainty in Deep Learning | https://proceedings.mlr.press/v48/gal16.html | Supports future-work discussion of Monte Carlo dropout and approximate Bayesian uncertainty estimation | Discussion / Future work | Verified |
+| REF-UNC-002 | Deep ensembles | simple scalable predictive uncertainty estimation deep ensembles NeurIPS 2017 | NeurIPS | Foundational method paper for ensemble-based uncertainty estimation | Non-peer-reviewed summaries only | Simple and Scalable Predictive Uncertainty Estimation using Deep Ensembles | https://papers.nips.cc/paper/7219-simple-and-scalable-predictive-uncertainty-estimation-using-deep-ensembles | Supports future-work discussion of deep ensembles for predictive uncertainty and dataset-shift uncertainty | Discussion / Future work | Verified |
+| REF-UNC-003 | Medical imaging uncertainty review | uncertainty estimation deep learning medical imaging aleatoric epistemic review | Meta-Radiology / ScienceDirect | Review paper specifically about uncertainty estimation in medical imaging | Non-medical uncertainty only | A review of uncertainty estimation and its application in medical imaging | https://www.sciencedirect.com/science/article/pii/S2950162823000036 | Supports distinction between aleatoric and epistemic uncertainty and medical imaging UQ applications | Discussion / Future work | Verified |
+| REF-UNC-004 | Medical image classification uncertainty | uncertainty estimation medical image classification review | PMC | Review focused on uncertainty estimation in medical image classification | Segmentation-only papers unless broadly relevant | Uncertainty Estimation in Medical Image Classification | https://pmc.ncbi.nlm.nih.gov/articles/PMC9382553/ | Directly supports future work on uncertainty estimation for medical image classification | Discussion / Future work | Verified |
+| REF-UNC-005 | Radiology uncertainty quantification | uncertainty quantification deep learning radiologic images review | Radiology / RSNA | Radiology-focused review on uncertainty quantification in deep learning | Non-radiology papers only | Quantifying Uncertainty in Deep Learning of Radiologic Images | https://doi.org/10.1148/radiol.222217 | Supports radiology-specific framing of UQ methods, challenges, and future directions | Discussion / Future work | Verified |
+
+## Uncertainty Manuscript Claim Mapping
+
+| Claim ID | Manuscript claim | Supporting reference |
+|---|---|---|
+| CLAIM-UNC-001 | Calibration is related to confidence quality but is not equivalent to full uncertainty estimation. | REF-UNC-003; REF-UNC-004; REF-UNC-005 |
+| CLAIM-UNC-002 | Monte Carlo dropout is a common approximate Bayesian method for uncertainty estimation in deep learning. | REF-UNC-001 |
+| CLAIM-UNC-003 | Deep ensembles are a common and strong approach for predictive uncertainty estimation. | REF-UNC-002 |
+| CLAIM-UNC-004 | Future work should evaluate uncertainty-aware approaches under dataset shift, not only internal test performance. | REF-UNC-002; REF-UNC-003; REF-UNC-004; REF-UNC-005 |
