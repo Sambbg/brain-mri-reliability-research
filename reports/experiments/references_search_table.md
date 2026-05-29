@@ -109,3 +109,21 @@ Avoid:
 | CLAIM-SHIFT-002 | External validation should ideally test models across different institutions, patient populations, scanners, or imaging conditions. | REF-SHIFT-001; REF-SHIFT-002 |
 | CLAIM-SHIFT-003 | D3B should be interpreted as glioma-focused domain-shift analysis rather than full four-class external validation. | REF-SHIFT-001; REF-SHIFT-002; REF-SHIFT-003 |
 | CLAIM-SHIFT-004 | Curating shifted medical image datasets is important for evaluating model generalisation. | REF-SHIFT-003; REF-SHIFT-004 |
+
+## Verified Brain MRI Tumour Classification References
+
+| ID | Area | Search query | Database / source | Inclusion criteria | Exclusion criteria | Candidate paper title | DOI / URL | Why it is useful | Manuscript section | Status |
+|---|---|---|---|---|---|---|---|---|---|---|
+| REF-BMRI-001 | Brain MRI tumour deep learning review | brain tumor MRI deep learning review classification segmentation | npj Precision Oncology / PMC / Nature | Recent review covering deep learning for brain tumour MRI analysis | Narrow single-model studies only | A review of deep learning for brain tumor analysis in MRI | https://www.nature.com/articles/s41698-024-00789-2 | Supports the background claim that deep learning is widely applied to MRI brain tumour analysis, including classification | Introduction / Discussion | Verified |
+| REF-BMRI-002 | Brain tumour detection/classification/segmentation review | brain tumor detection classification segmentation deep learning MRI review public datasets metrics | Informatics in Medicine Unlocked / ScienceDirect | Review covering datasets, preprocessing, performance metrics, detection, classification, and segmentation | Papers unrelated to MRI | Brain tumor detection, classification and segmentation by deep learning based on MRI images | https://www.sciencedirect.com/science/article/pii/S2590005625001985 | Supports background on common datasets, model types, metrics, and clinical-relevance limitations in MRI brain tumour DL | Introduction / Discussion | Verified |
+| REF-BMRI-003 | Recent systematic review | deep learning brain tumor detection classification MRI systematic review 2020 2024 | Journal of Imaging Informatics in Medicine / Springer | Recent systematic review focused on MRI brain tumour detection/classification | Non-systematic opinion papers | Deep Learning Approaches for Brain Tumor Detection and Classification Using MRI Images (2020 to 2024): A Systematic Review | https://doi.org/10.1007/s10278-024-01283-8 | Supports the claim that recent literature contains many MRI brain tumour DL classification studies | Introduction | Verified |
+| REF-BMRI-004 | Four-class MRI tumour classification benchmark example | four class brain tumor MRI classification glioma meningioma pituitary no tumor ResNet EfficientNet | arXiv | Study using four-class MRI tumour classification with common pretrained architectures | Studies without comparable class structure | Deep Learning in Medical Image Classification from MRI-based Brain Tumor Images | https://arxiv.org/abs/2408.00636 | Supports background that four-class public MRI tumour classification benchmarks are commonly used with CNN backbones | Introduction / Methods context | Verified |
+
+## Brain MRI Tumour Classification Manuscript Claim Mapping
+
+| Claim ID | Manuscript claim | Supporting reference |
+|---|---|---|
+| CLAIM-BMRI-001 | Deep learning is widely used for MRI brain tumour analysis, including classification. | REF-BMRI-001; REF-BMRI-002 |
+| CLAIM-BMRI-002 | Recent MRI brain tumour classification studies commonly evaluate CNN, transformer, or hybrid architectures on public datasets. | REF-BMRI-001; REF-BMRI-002; REF-BMRI-003 |
+| CLAIM-BMRI-003 | Four-class brain MRI tumour classification benchmarks commonly include glioma, meningioma, pituitary tumour, and no-tumour classes. | REF-BMRI-004 |
+| CLAIM-BMRI-004 | Many studies emphasise internal performance metrics, which motivates additional reliability evaluation using leakage audits, calibration, and domain-shift testing. | REF-BMRI-001; REF-BMRI-002; REF-BMRI-003 |
