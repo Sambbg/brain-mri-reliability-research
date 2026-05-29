@@ -27,67 +27,66 @@ Reliability also depends on confidence quality. Modern neural networks can be ac
 A further challenge is dataset shift. Models trained and tested internally may behave differently when applied to images from different institutions, acquisition protocols, scanners, or dataset construction processes [REF-SHIFT-001; REF-SHIFT-002; REF-SHIFT-003]. External validation is therefore important, but candidate external datasets must themselves be audited before being treated as independent evidence. If two public datasets substantially overlap, using one as external validation for the other can create a false impression of generalisability.
 
 This study evaluates brain MRI tumour classification models using a reliability-first framework. Rather than treating internal accuracy as sufficient, the study combines leakage-aware splitting, exact and perceptual overlap auditing, internal performance evaluation, calibration analysis, post-hoc temperature scaling, and glioma-focused domain-shift testing. Three architectures are evaluated: ResNet18, EfficientNet-B0, and ViT-B/16. The central research question is whether high-performing brain MRI tumour classifiers remain reliable when assessed using calibration, uncertainty-relevant confidence behaviour, and shifted-domain evaluation rather than internal accuracy alone.
-
-
 ## 2. Methods
 
 ### 2.1 Study design
 
 This study used a reliability-focused experimental design to evaluate brain MRI tumour classification models beyond internal accuracy (Figure 1) [REF-SHIFT-001; REF-SHIFT-002; REF-REPORT-001]. The evaluation pipeline included leakage-aware dataset preparation, duplicate and overlap auditing, internal model evaluation, calibration analysis, post-hoc temperature scaling, and glioma-focused domain-shift testing.
 
-Three model architectures were evaluated: ResNet18, EfficientNet-B0, and ViT-B/16. These architectures were selected to represent a compact convolutional baseline, a stronger convolutional architecture, and a transformer-based vision architecture. The purpose was not to claim universal architectural superiority, but to test whether high internal performance translated into reliable calibration and shifted-domain behaviour across model families.
+Three model architectures were evaluated:
 
-### 2.2 Dataset sources and usage decisions
+- E001: ResNet18
+- E002: EfficientNet-B0
+- E003: ViT-B/16
 
-Three dataset roles were defined in the study (Table 1). D1 was used as the primary four-class brain MRI tumour dataset for internal model development and testing. Its labels consisted of glioma, meningioma, pituitary tumour, and no tumour.
+All models were trained on the same D1 leakage-aware split and evaluated using the same internal and cross-dataset protocol.
 
-D2 was initially considered as a candidate external validation dataset. However, exact and perceptual overlap auditing showed substantial overlap between D1 and D2. Because this overlap could compromise the independence of external validation, D2 was rejected as a clean external validation dataset [REF-LEAK-001; REF-LEAK-002; REF-LEAK-003; REF-LEAK-004]. D2 was therefore used only as evidence that public brain MRI datasets require overlap auditing before being treated as independent validation sources.
+### 2.2 Dataset D1: internal training and testing dataset
 
-D3B was derived from the ICDC-Glioma / TCIA source and used as a glioma-focused shifted-domain dataset. Selected DICOM series were inspected, converted into reproducible central 2D slices, and audited against D1 using exact and perceptual hash checks. No D1-D3B exact or perceptual near-overlap was detected under the selected audit threshold. Because D3B is glioma-focused and does not reproduce the four-class label structure of D1, it was not used for full four-class external accuracy estimation. Instead, it was used for shifted-domain prediction and confidence-behaviour analysis [REF-SHIFT-001; REF-SHIFT-002; REF-SHIFT-003].
+D1 was used as the primary four-class brain MRI tumour classification dataset. The four classes were glioma, meningioma, notumor, and pituitary.
 
-### 2.3 Leakage-aware preparation and overlap auditing
+A manifest was created to record image paths, labels, and split information. Exact duplicate analysis was performed using SHA256 hashing. A leakage-aware split was then used to reduce the risk of duplicate or near-identical samples appearing across training, validation, and test subsets.
 
-The D1 dataset was prepared using a leakage-aware workflow. Exact duplicate checks were performed before splitting. Train, validation, and test partitions were then created in a way intended to reduce leakage between development and evaluation data.
+The final D1 split contained separate training, validation, and test partitions. All model comparisons used this same split to ensure fairness across architectures.
 
-Candidate external datasets were also audited before use. Exact hash matching was used to detect identical files, while perceptual hashing was used to detect visually near-duplicate images. This was necessary because visually duplicated or near-duplicated medical images can inflate apparent model performance when they appear across training and evaluation partitions [REF-LEAK-001; REF-LEAK-002; REF-LEAK-003].
+### 2.3 Dataset D2: rejected external validation candidate
 
-### 2.4 Model training
+D2 was initially considered as an external validation candidate. However, exact SHA256 overlap and perceptual-hash near-overlap audits showed substantial overlap between D1 and D2.
 
-Three models were trained on D1: ResNet18, EfficientNet-B0, and ViT-B/16. Each model was trained using the same internal D1 split structure so that internal performance, calibration, and shifted-domain behaviour could be compared across architectures.
+Because of this overlap, D2 was rejected as a clean independent external validation dataset. D2 was not used for model performance claims.
 
-For each experiment, the best model checkpoint was selected using validation macro-F1. The final internal evaluation was then performed on the held-out D1 test set. Saved experiment artifacts were used to generate the manuscript tables and figures, rather than manually retyping result values.
+### 2.4 Dataset D3B: glioma-focused domain-shift dataset
 
-### 2.5 Internal performance evaluation
+D3B was derived from the ICDC-Glioma collection. It was used as a visually distinct glioma-focused domain-shift dataset.
 
-Internal D1 performance was evaluated using accuracy, balanced accuracy, and macro-F1. Macro-F1 was treated as the main classification summary metric because it gives equal weight to each class and is less dominated by majority-class performance than raw accuracy.
+D3B was not treated as a full four-class external validation dataset because it does not share the same four-class label structure as D1. Instead, it was used to test whether D1-trained models recognised visually distinct glioma-domain images as glioma.
 
-The internal performance comparison is reported in Table 2 and Figure 2.
+Selected DICOM series were downloaded, inspected, and converted into 2D PNG images using a reproducible central-slice rule. Five central slices were selected per valid series. The final converted D3B dataset contained 265 slices from 53 patients and 53 series.
 
-### 2.6 Calibration and probabilistic evaluation
+### 2.5 D3B overlap auditing
 
-Calibration was evaluated because classification accuracy alone does not indicate whether predicted confidence values are reliable [REF-CAL-001; REF-CAL-002]. The calibration analysis included expected calibration error, negative log-likelihood, Brier score, and confidence-accuracy gap [REF-CAL-001; REF-CAL-002; REF-CAL-003].
+After conversion, D3B was compared against D1 using exact SHA256 hashing and perceptual hashing. No exact SHA256 overlap and no pHash near-overlap were detected at the selected threshold. This supported treating D3B as visually distinct from D1 for glioma-focused domain-shift analysis.
 
-Post-hoc temperature scaling was applied using validation logits. A single scalar temperature was learned and then applied to the D1 test logits and D3B shifted-domain logits. This procedure was used to test whether confidence calibration improved without changing the predicted class labels [REF-CAL-001].
+### 2.6 Model training and internal evaluation
 
-Internal calibration results are reported in Table 3 and Figure 3.
+Each model was trained on the D1 training split using the same leakage-aware data partition. Validation performance was monitored during training, and the best model checkpoint was selected based on validation macro-F1.
 
-### 2.7 D3B shifted-domain evaluation
+Each trained model was evaluated on the D1 test split using accuracy, balanced accuracy, macro-F1, class-level precision, class-level recall, class-level F1-score, and confusion matrices.
 
-D3B was evaluated as a glioma-focused shifted-domain dataset. Because all selected D3B samples came from a glioma-focused source, the main shifted-domain question was not four-class accuracy. Instead, the analysis examined whether D1-trained models assigned D3B images to the glioma class and how confident the models were under this shift.
+### 2.7 Calibration evaluation and temperature scaling
 
-The D3B analysis included slice-level glioma prediction rate, patient-majority glioma prediction rate, series-majority glioma prediction rate, mean glioma probability, median glioma probability, mean maximum confidence, and entropy. These metrics were used to describe shifted-domain behaviour without overstating D3B as a full external validation dataset.
+Internal calibration was evaluated on the D1 test split using mean maximum softmax confidence, confidence-accuracy gap, expected calibration error with 15 bins, Brier score, and negative log-likelihood.
 
-D3B shifted-domain results are reported in Table 4 and Figures 4–5.
+Post-hoc temperature scaling was applied to each model. The temperature parameter was fitted using validation-set logits only. The learned temperature was then applied to held-out D1 test logits. Model weights were not retrained during temperature scaling.
 
-### 2.8 Temperature-scaled D3B confidence analysis
+### 2.8 D3B domain-shift evaluation
 
-The temperature values learned from D1 validation logits were also applied to D3B logits. This tested whether internal calibration adjustment softened model confidence under shifted-domain conditions. Because temperature scaling does not change class ranking, it was expected to affect confidence values and entropy but not predicted class labels.
+Each D1-trained model was evaluated on the D3B central-slice dataset. Because D3B is glioma-focused and does not support full four-class external accuracy evaluation, the analysis focused on prediction behaviour and confidence rather than conventional accuracy.
 
-Temperature-scaled D3B confidence results are reported in Table 5 and Figure 6.
+The D3B evaluation measured slice-level glioma prediction rate, patient-majority glioma prediction rate, series-majority glioma prediction rate, mean glioma probability, median glioma probability, mean maximum softmax confidence, entropy, and prediction distribution across the four D1 classes.
 
-### 2.9 Reproducibility and reporting
+The temperature learned from D1 validation logits was also applied to D3B predictions to compare raw and temperature-scaled confidence under dataset shift.
 
-All major outputs were generated from saved experiment artifacts. Summary tables, figures, and audits were generated using scripts stored in the repository. The project includes dataset usage decisions, overlap audit outputs, model comparison summaries, manuscript asset indexes, and citation-integrity tracking. This structure was used to improve transparency and reduce the risk of unsupported manuscript claims [REF-REPORT-001; REF-REPORT-002].
 ## 3. Results
 
 ### 3.1 Dataset integrity and overlap auditing
