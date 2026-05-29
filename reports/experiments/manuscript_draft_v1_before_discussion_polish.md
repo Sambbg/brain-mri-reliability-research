@@ -141,61 +141,52 @@ The results support four main findings. First, all three models achieved high in
 Taken together, these findings support the central argument of the study: internal accuracy is insufficient evidence of reliability for brain MRI tumour classification models.
 ## 4. Discussion
 
-## 4. Discussion
+### 4.1 Principal finding
 
-### 4.1 Principal findings
+This study shows that high internal classification performance is not sufficient evidence of reliability in brain MRI tumour classification. Across ResNet18, EfficientNet-B0, and ViT-B/16, all models achieved strong internal performance on the leakage-aware D1 test split, yet none maintained stable glioma-domain prediction behaviour on visually distinct D3B images.
 
-This study evaluated brain MRI tumour classification models using a reliability-first framework rather than relying on internal accuracy alone. The main finding is that high internal D1 performance did not translate into stable glioma-focused shifted-domain behaviour on D3B. All three models achieved strong internal macro-F1 scores, and temperature scaling improved internal calibration. However, D3B evaluation showed that the models frequently failed to assign glioma-focused D3B images to the glioma class.
+This finding directly challenges the common assumption that high test accuracy on public brain MRI datasets is enough to support reliability claims. Even when duplicate leakage was controlled and internal calibration was improved using temperature scaling, the models remained unstable under cross-dataset shift.
 
-This result supports the central argument that internal classification performance is not sufficient evidence of reliability in medical imaging AI [REF-SHIFT-001; REF-SHIFT-002; REF-REPORT-001]. A model can perform well on an internal held-out test set while still behaving inconsistently when evaluated on visually distinct data from a different source.
+### 4.2 Internal performance can hide external fragility
 
-### 4.2 Importance of leakage and overlap auditing
+The internal D1 results were strong across all three architectures. EfficientNet-B0 achieved the highest internal macro-F1, followed closely by ResNet18, while ViT-B/16 remained slightly lower but still high.
 
-A major methodological finding was the rejection of D2 as a clean external validation dataset. Although D2 initially appeared suitable as an external benchmark, exact and perceptual overlap auditing revealed substantial overlap with D1. Using D2 as external validation would therefore have risked overstating generalisation.
+If this study had stopped at internal accuracy and macro-F1, the models would appear highly reliable. However, the D3B evaluation showed a different picture. ResNet18 predicted glioma for only 29.43% of D3B slices, EfficientNet-B0 for 44.15%, and ViT-B/16 for 40.38%.
 
-This is important because public medical imaging datasets are often reused, repackaged, or redistributed in ways that are not obvious from dataset names alone. Without overlap auditing, apparent external validation can become contaminated validation [REF-LEAK-001; REF-LEAK-002; REF-LEAK-003]. In this study, the D2 rejection strengthened the experimental design by preventing a misleading external-validation claim.
+This means that internal performance substantially overestimated model reliability under domain shift.
 
-### 4.3 Internal performance versus shifted-domain behaviour
+### 4.3 Dataset overlap auditing is essential
 
-EfficientNet-B0 achieved the strongest internal D1 result, with the highest macro-F1 among the three architectures. However, it predicted glioma for fewer than half of D3B patients by majority vote. This shows that the internally strongest model was not necessarily reliable under the D3B shifted-domain test.
+One of the most important methodological findings was the rejection of D2 as an external validation dataset. D2 initially appeared useful as an external candidate, but exact and perceptual overlap auditing revealed substantial D1-D2 overlap.
 
-The result should not be interpreted as proof that EfficientNet-B0 is unreliable in all settings, nor that ViT-B/16 or ResNet18 are generally inferior. The more defensible interpretation is narrower: under this specific D1-to-D3B evaluation, high internal performance did not guarantee stable shifted-domain glioma prediction behaviour.
+This matters because many medical imaging studies treat public datasets as independent simply because they have different names or sources. This study shows that such an assumption is unsafe. Without overlap auditing, an apparently external evaluation may actually contain reused or visually duplicated samples, leading to inflated generalisation claims.
 
-### 4.4 Calibration and temperature scaling
+Therefore, dataset independence should be treated as an empirical question, not an assumption.
 
-Temperature scaling improved internal calibration for all three models. Expected calibration error, negative log-likelihood, Brier score, and confidence-accuracy gap decreased after scaling. This confirms that post-hoc calibration can improve confidence quality without changing predicted labels [REF-CAL-001; REF-CAL-002; REF-CAL-003].
+### 4.4 Calibration improved confidence but did not solve domain shift
 
-However, temperature scaling did not correct shifted-domain class behaviour on D3B. The D3B glioma prediction rates remained unchanged after scaling because temperature scaling changes probability softness but not class ranking. This distinction is important: calibration can improve the reliability of confidence estimates, but it does not automatically solve dataset shift or class-mapping instability [REF-SHIFT-001; REF-SHIFT-002].
+Temperature scaling improved internal calibration for all three models. It reduced ECE, reduced confidence-accuracy gaps, and improved negative log-likelihood. This confirms that post-hoc calibration is useful for improving confidence quality on the internal distribution.
 
-### 4.5 Interpretation of D3B findings
+However, temperature scaling did not correct the D3B prediction distribution. The class predictions and patient-majority behaviour remained unchanged after scaling. This is expected because temperature scaling modifies probability sharpness but does not change the learned feature representation.
 
-D3B was used as a glioma-focused shifted-domain dataset, not as a full four-class external validation set. This distinction is critical. Because D3B does not reproduce the D1 label structure, this study cannot report conventional four-class external accuracy on D3B.
+This distinction is important. Calibration can make confidence values less extreme, but it cannot force a model to learn domain-invariant tumour features after training. Therefore, calibration should not be presented as a solution to dataset shift.
 
-The valid interpretation is that D1-trained models showed unstable glioma-focused prediction behaviour when applied to a visually distinct glioma-domain source. This is still useful evidence, but it is not the same as full external validation. The manuscript should therefore avoid claiming clinical generalisation, deployment readiness, or external diagnostic validity.
+### 4.5 Architecture alone did not solve reliability
 
-### 4.6 Relationship to uncertainty-aware modelling
+EfficientNet-B0 performed best overall, both internally and on D3B. However, even EfficientNet-B0 failed to predict glioma for a majority of D3B slices. ViT-B/16 did not outperform the CNN baselines and showed substantial D3B instability, including frequent notumor predictions on glioma-domain images.
 
-This study evaluated calibration and confidence behaviour, but it did not implement full uncertainty-aware methods such as Monte Carlo dropout, deep ensembles, Bayesian neural networks, or evidential learning. Calibration and uncertainty are related but not identical. A model may be calibrated on an internal test set while still failing to express useful uncertainty under dataset shift.
+This weakens any simplistic claim that transformer-based models are inherently more reliable than CNNs. Architecture may improve performance, but reliability depends on data quality, dataset independence, calibration, and robustness under shift.
 
-Future work should evaluate uncertainty-aware methods under the same leakage-aware and shifted-domain conditions used here [REF-UNC-001; REF-UNC-002; REF-UNC-003; REF-UNC-004; REF-UNC-005]. In particular, future experiments should test whether uncertainty-aware methods can identify shifted or unreliable inputs more effectively than temperature scaling alone.
+### 4.6 Limitations
 
-### 4.7 Strengths
+D3B is not a full four-class external validation dataset. It is a glioma-focused domain-shift dataset. Therefore, the D3B results should not be described as four-class external accuracy.
 
-The main strength of this study is its conservative evaluation design. The project did not treat high internal accuracy as sufficient evidence of reliability. Instead, it combined duplicate auditing, public dataset overlap checks, internal performance evaluation, calibration analysis, temperature scaling, and shifted-domain testing.
+D3B labels are collection-level glioma labels rather than slice-level tumour annotations. The central-slice conversion strategy is reproducible, but it does not guarantee that every selected slice contains visible tumour tissue.
 
-Another strength is reproducibility. Tables and figures were generated from saved experiment artifacts, and the project includes explicit audit files, manuscript asset indexes, citation tracking, and dataset usage decisions. This reduces the risk of unsupported or manually altered result reporting.
+Only three architectures were evaluated. Additional architectures, including DenseNet, Swin Transformer, ConvNeXt, and uncertainty-aware models, may produce different results.
 
-### 4.8 Limitations
+This study evaluates prediction behaviour and confidence under dataset shift. It does not establish clinical diagnostic validity.
 
-This study has several limitations. First, D3B is glioma-focused and cannot support full four-class external accuracy estimation. Second, the D3B analysis used selected central slices rather than full volumetric modelling. Third, only three architectures were evaluated. Fourth, temperature scaling was the only post-hoc calibration method tested. Fifth, the study did not yet implement full uncertainty-aware approaches such as ensembles or Monte Carlo dropout.
-
-The findings should therefore be interpreted as evidence of reliability limitations under the current experimental design, not as a complete assessment of all possible brain MRI tumour classification models.
-
-### 4.9 Implications
-
-The results suggest that brain MRI tumour classification studies should report more than internal accuracy. At minimum, future studies should include leakage-aware splitting, duplicate and overlap audits, calibration metrics, and carefully described external or shifted-domain evaluation. Candidate external datasets should not be assumed independent without evidence.
-
-For clinical translation, the evidence threshold would be much higher. Prospective validation, site-diverse testing, transparent reporting, and clinically meaningful evaluation protocols would be required before any deployment claim could be justified [REF-REPORT-001; REF-REPORT-002; REF-REPORT-003].
 ## 5. Conclusion
 
 This study demonstrates that high internal classification performance does not guarantee reliable behaviour under dataset shift. Three D1-trained models — ResNet18, EfficientNet-B0, and ViT-B/16 — achieved strong internal test performance on a leakage-aware brain MRI tumour classification split. However, none maintained stable glioma-domain prediction behaviour on visually distinct D3B images.
