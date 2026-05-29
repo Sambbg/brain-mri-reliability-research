@@ -196,18 +196,16 @@ The findings should therefore be interpreted as evidence of reliability limitati
 The results suggest that brain MRI tumour classification studies should report more than internal accuracy. At minimum, future studies should include leakage-aware splitting, duplicate and overlap audits, calibration metrics, and carefully described external or shifted-domain evaluation. Candidate external datasets should not be assumed independent without evidence.
 
 For clinical translation, the evidence threshold would be much higher. Prospective validation, site-diverse testing, transparent reporting, and clinically meaningful evaluation protocols would be required before any deployment claim could be justified [REF-REPORT-001; REF-REPORT-002; REF-REPORT-003].
-
 ## 5. Conclusion
 
-This study evaluated brain MRI tumour classification models using a reliability-first framework that combined leakage-aware dataset preparation, overlap auditing, internal performance evaluation, calibration analysis, temperature scaling, and glioma-focused shifted-domain testing.
+This study demonstrates that high internal classification performance does not guarantee reliable behaviour under dataset shift. Three D1-trained models — ResNet18, EfficientNet-B0, and ViT-B/16 — achieved strong internal test performance on a leakage-aware brain MRI tumour classification split. However, none maintained stable glioma-domain prediction behaviour on visually distinct D3B images.
 
-All three evaluated architectures achieved strong internal D1 classification performance. EfficientNet-B0 achieved the highest internal macro-F1, followed closely by ResNet18, while ViT-B/16 performed slightly lower under the current experimental setup. Post-hoc temperature scaling improved internal calibration for all models, reducing expected calibration error, negative log-likelihood, Brier score, and confidence-accuracy gap.
+The results also show that calibration and domain-shift robustness are different problems. Post-hoc temperature scaling improved internal calibration and softened confidence under D3B shift, but it did not correct unstable prediction distributions. This means calibration is useful but insufficient as a standalone reliability solution.
 
-However, shifted-domain evaluation on D3B showed that strong internal performance and improved internal calibration did not guarantee stable glioma-focused prediction behaviour. None of the models consistently assigned the glioma-focused D3B samples to the glioma class, and temperature scaling softened confidence without changing the underlying predicted class labels.
+A major methodological finding was that one candidate external dataset, D2, could not be treated as clean independent evidence because it showed substantial overlap with D1. This highlights the importance of dataset overlap auditing before making external validation claims.
 
-The study also showed that candidate external datasets require explicit auditing before being used as independent validation evidence. D2 was rejected as a clean external validation dataset after exact and perceptual overlap auditing revealed substantial overlap with D1. This finding reinforces the importance of dataset provenance, duplicate checking, and conservative interpretation in public medical imaging benchmarks.
+The strongest defensible conclusion is that brain MRI tumour classifiers should not be judged by internal accuracy alone. Reliability-focused evaluation requires duplicate-aware splitting, dataset independence checks, calibration assessment, and domain-shift testing. Without these steps, reported performance may overstate the real reliability of medical image classification models.
 
-Overall, the findings support the central conclusion that internal accuracy alone is insufficient evidence of reliability for brain MRI tumour classification models. More defensible evaluation requires leakage-aware splitting, dataset overlap auditing, calibration assessment, and carefully qualified shifted-domain or external validation. The current study provides a reproducible MSc-level framework for this type of reliability evaluation, while further work should extend the analysis to site-diverse external datasets, volumetric modelling, and uncertainty-aware methods.
 
 ## Manuscript Assets
 
