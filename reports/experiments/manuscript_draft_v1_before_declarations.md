@@ -209,53 +209,6 @@ The study also showed that candidate external datasets require explicit auditing
 
 Overall, the findings support the central conclusion that internal accuracy alone is insufficient evidence of reliability for brain MRI tumour classification models. More defensible evaluation requires leakage-aware splitting, dataset overlap auditing, calibration assessment, and carefully qualified shifted-domain or external validation. The current study provides a reproducible MSc-level framework for this type of reliability evaluation, while further work should extend the analysis to site-diverse external datasets, volumetric modelling, and uncertainty-aware methods.
 
-
-
-## Declarations
-
-### Data availability
-
-This study used publicly available brain MRI datasets and a TCIA/ICDC-derived glioma-focused dataset. The primary internal dataset was used for four-class brain MRI tumour classification, while the ICDC-Glioma / TCIA-derived dataset was used for glioma-focused shifted-domain analysis after DICOM inspection and slice conversion.
-
-The processed dataset manifests, dataset usage decisions, overlap-audit outputs, and derived experiment summaries are stored in the project repository. Raw imaging data are not redistributed in this repository. Users should obtain original imaging data directly from the relevant public dataset providers and comply with their usage terms.
-
-### Code availability
-
-The code used for dataset preparation, overlap auditing, model training, calibration analysis, shifted-domain evaluation, and manuscript figure/table generation is stored in the project repository.
-
-Before public release or journal submission, the repository should be checked to ensure that no restricted data, large model files, private paths, or unnecessary temporary files are included.
-
-### Ethics and dataset use
-
-This study used retrospective publicly available imaging data and did not involve direct patient recruitment, intervention, or prospective clinical testing by the author. No clinical decisions were made using the models developed in this project.
-
-The ICDC-Glioma / TCIA-derived dataset was used only for research evaluation and shifted-domain analysis. Raw data redistribution is not performed in this repository. All dataset use should comply with the original dataset licences, access terms, and citation requirements.
-
-This study should be interpreted as a retrospective experimental evaluation of model reliability, not as clinical validation or deployment evidence.
-
-### AI-assisted writing and research support
-
-The author used ChatGPT as an AI-assisted tool for project organisation, code drafting support, debugging guidance, manuscript outlining, language refinement, table and figure planning, and citation-tracking workflow design.
-
-All experimental design decisions, code execution, data processing, model training, result verification, interpretation, and final manuscript content remain the responsibility of the author. The AI tool was not treated as an author and was not used as a scientific source. All cited literature must be independently verified by the author before thesis submission or journal submission.
-
-This statement should be revised according to the disclosure requirements of the target journal, university, or supervisor.
-
-### Clinical use disclaimer
-
-The models evaluated in this study are not intended for clinical deployment. The study does not establish diagnostic safety, clinical efficacy, prospective validity, or readiness for use in patient care.
-
-Further validation using site-diverse datasets, prospective evaluation, clinical workflow assessment, and appropriate regulatory and ethical review would be required before any clinical-use claim could be considered.
-
-### Conflict of interest
-
-The author declares no known conflict of interest related to this study.
-
-### Funding
-
-No dedicated external funding is currently declared for this study.
-
-
 ## Manuscript Assets
 
 Generated manuscript-ready tables are stored in `reports/experiments/tables/`. Generated figures are stored in `reports/experiments/figures/`. Captions are stored in `reports/experiments/figure_captions.md` and `reports/experiments/table_captions.md`.
