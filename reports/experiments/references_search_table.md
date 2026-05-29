@@ -127,3 +127,20 @@ Avoid:
 | CLAIM-BMRI-002 | Recent MRI brain tumour classification studies commonly evaluate CNN, transformer, or hybrid architectures on public datasets. | REF-BMRI-001; REF-BMRI-002; REF-BMRI-003 |
 | CLAIM-BMRI-003 | Four-class brain MRI tumour classification benchmarks commonly include glioma, meningioma, pituitary tumour, and no-tumour classes. | REF-BMRI-004 |
 | CLAIM-BMRI-004 | Many studies emphasise internal performance metrics, which motivates additional reliability evaluation using leakage audits, calibration, and domain-shift testing. | REF-BMRI-001; REF-BMRI-002; REF-BMRI-003 |
+
+## Verified Reporting Standards References
+
+| ID | Area | Search query | Database / source | Inclusion criteria | Exclusion criteria | Candidate paper title | DOI / URL | Why it is useful | Manuscript section | Status |
+|---|---|---|---|---|---|---|---|---|---|---|
+| REF-REPORT-001 | Medical imaging AI reporting standards | CLAIM 2024 checklist artificial intelligence medical imaging reporting guideline | Radiology: Artificial Intelligence / PMC / EQUATOR | Reporting guideline specifically for AI in medical imaging | Non-imaging AI reporting only | Checklist for Artificial Intelligence in Medical Imaging (CLAIM): 2024 Update | https://pmc.ncbi.nlm.nih.gov/articles/PMC11304031/ | Supports transparent and reproducible reporting of medical imaging AI studies | Methods / Discussion / Limitations | Verified |
+| REF-REPORT-002 | Prediction model reporting standards | TRIPOD AI statement reporting clinical prediction models machine learning 2024 | BMJ / EQUATOR | Reporting guideline for prediction model studies using regression or machine learning | Clinical trial-only guidance | TRIPOD+AI statement: updated guidance for reporting clinical prediction models that use regression or machine learning methods | https://www.bmj.com/content/385/bmj-2023-078378 | Supports transparent reporting of prediction model development and evaluation | Methods / Discussion / Limitations | Verified |
+| REF-REPORT-003 | AI clinical trial reporting standards | CONSORT AI SPIRIT AI reporting guidelines artificial intelligence clinical trials | Nature Medicine / Trials | Reporting guidelines for clinical trials or protocols involving AI interventions | Not to be used as direct evidence for this non-clinical experimental study | Guidelines for clinical trial protocols for interventions involving artificial intelligence: the SPIRIT-AI extension; Reporting guidelines for clinical trials of artificial intelligence interventions: CONSORT-AI | https://www.nature.com/articles/s41591-020-1037-7 | Supports future-work claim that clinical deployment requires prospective and transparently reported clinical evaluation | Discussion / Future work | Verified |
+
+## Reporting Standards Manuscript Claim Mapping
+
+| Claim ID | Manuscript claim | Supporting reference |
+|---|---|---|
+| CLAIM-REPORT-001 | Medical imaging AI studies should report data sources, evaluation design, model development, and validation transparently. | REF-REPORT-001 |
+| CLAIM-REPORT-002 | Prediction model studies using machine learning should report model development and evaluation clearly. | REF-REPORT-002 |
+| CLAIM-REPORT-003 | This study should be interpreted as retrospective experimental evaluation, not clinical deployment evidence. | REF-REPORT-001; REF-REPORT-002 |
+| CLAIM-REPORT-004 | Future clinical translation would require prospective clinical evaluation and appropriate clinical-trial reporting standards. | REF-REPORT-003 |
