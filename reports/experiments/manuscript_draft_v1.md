@@ -34,7 +34,7 @@ The central research question is whether high-performing brain MRI tumour classi
 
 ### 2.1 Study design
 
-This study used a reliability-focused experimental design to evaluate brain MRI tumour classification models beyond internal accuracy (Figure 1). The evaluation pipeline included leakage-aware dataset preparation, duplicate and overlap auditing, internal model evaluation, calibration analysis, post-hoc temperature scaling, and glioma-focused domain-shift testing.
+This study used a reliability-focused experimental design to evaluate brain MRI tumour classification models beyond internal accuracy (Figure 1) [REF-SHIFT-001; REF-SHIFT-002; REF-REPORT-001]. The evaluation pipeline included leakage-aware dataset preparation, duplicate and overlap auditing, internal model evaluation, calibration analysis, post-hoc temperature scaling, and glioma-focused domain-shift testing.
 
 Three model architectures were evaluated:
 
@@ -98,7 +98,7 @@ The initial D1 dataset was prepared using a leakage-aware workflow. Exact duplic
 
 D2 was initially considered as an external validation candidate. However, exact and perceptual overlap auditing revealed substantial overlap between D1 and D2. As a result, D2 was rejected as a clean independent external validation dataset. This finding is methodologically important because it demonstrates that public brain MRI benchmark datasets may not be independent even when they are distributed as separate sources.
 
-D3B, derived from ICDC-Glioma, was therefore selected as a visually distinct glioma-focused domain-shift dataset. The usage decision for D1, D2, and D3B is summarised in Table 1. Selected DICOM series were downloaded, inspected, converted into reproducible central 2D slices, and audited against D1 using exact and perceptual hash checks. No exact or pHash near-overlap was detected between D1 and D3B under the selected threshold. D3B was therefore used for glioma-focused domain-shift analysis. However, because D3B does not contain the same four-class label structure as D1, it was not treated as a full four-class external validation dataset.
+D3B, derived from ICDC-Glioma, was therefore selected as a visually distinct glioma-focused domain-shift dataset [REF-SHIFT-001; REF-SHIFT-002]. The usage decision for D1, D2, and D3B is summarised in Table 1 [REF-LEAK-001; REF-LEAK-003; REF-LEAK-004]. Selected DICOM series were downloaded, inspected, converted into reproducible central 2D slices, and audited against D1 using exact and perceptual hash checks. No exact or pHash near-overlap was detected between D1 and D3B under the selected threshold. D3B was therefore used for glioma-focused domain-shift analysis. However, because D3B does not contain the same four-class label structure as D1, it was not treated as a full four-class external validation dataset.
 
 ### 3.2 Internal D1 model performance
 
@@ -112,7 +112,7 @@ These findings show that high internal classification performance is achievable 
 
 Before temperature scaling, all three models showed mild overconfidence on the D1 test set. ResNet18 had a confidence-accuracy gap of 0.0169, EfficientNet-B0 had a gap of 0.0135, and ViT-B/16 had a gap of 0.0159.
 
-Post-hoc temperature scaling improved internal calibration for all three models without changing accuracy or macro-F1 (Table 3; Figure 3). ResNet18 ECE decreased from 0.0208 to 0.0145. EfficientNet-B0 ECE decreased from 0.0186 to 0.0152. ViT-B/16 ECE decreased from 0.0198 to 0.0109.
+Post-hoc temperature scaling improved internal calibration for all three models without changing accuracy or macro-F1 (Table 3; Figure 3) [REF-CAL-001]. ResNet18 ECE decreased from 0.0208 to 0.0145. EfficientNet-B0 ECE decreased from 0.0186 to 0.0152. ViT-B/16 ECE decreased from 0.0198 to 0.0109.
 
 These results show that temperature scaling improved confidence calibration on the internal D1 distribution. However, this improvement does not necessarily imply robustness to dataset shift.
 
@@ -120,13 +120,13 @@ These results show that temperature scaling improved confidence calibration on t
 
 All three D1-trained models showed unstable prediction behaviour on D3B.
 
-ResNet18 predicted glioma for only 29.43% of D3B slices and 26.42% of patients by majority vote (Table 4; Figure 4). EfficientNet-B0 performed better, predicting glioma for 44.15% of slices and 47.17% of patients by majority vote. ViT-B/16 predicted glioma for 40.38% of slices and 37.74% of patients by majority vote. The full D3B prediction distribution is shown in Figure 5.
+ResNet18 predicted glioma for only 29.43% of D3B slices and 26.42% of patients by majority vote (Table 4; Figure 4) [REF-SHIFT-001; REF-SHIFT-002]. EfficientNet-B0 performed better, predicting glioma for 44.15% of slices and 47.17% of patients by majority vote. ViT-B/16 predicted glioma for 40.38% of slices and 37.74% of patients by majority vote. The full D3B prediction distribution is shown in Figure 5.
 
 Although EfficientNet-B0 showed the strongest D3B glioma recognition among the tested models, none of the models predicted glioma for a majority of D3B slices. This indicates that high internal D1 performance did not translate into stable glioma-domain behaviour on visually distinct D3B images.
 
 ### 3.5 Temperature scaling under D3B shift
 
-Temperature scaling softened model confidence under D3B shift for all three architectures (Table 5; Figure 6). Mean maximum confidence decreased and entropy increased after applying the learned temperature values.
+Temperature scaling softened model confidence under D3B shift for all three architectures (Table 5; Figure 6) [REF-CAL-001; REF-SHIFT-001]. Mean maximum confidence decreased and entropy increased after applying the learned temperature values.
 
 However, temperature scaling did not change the predicted class distribution or patient-majority predictions. This is important because it shows that the D3B failure was not merely a calibration problem. The unstable prediction distribution reflects domain-shift sensitivity in the learned representations.
 
