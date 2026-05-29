@@ -25,9 +25,15 @@ This audit checks whether citation placeholders used in the manuscript are trace
 - `REF-LEAK-004`
 - `REF-REPORT-001`
 - `REF-REPORT-002`
+- `REF-REPORT-003`
 - `REF-SHIFT-001`
 - `REF-SHIFT-002`
 - `REF-SHIFT-003`
+- `REF-UNC-001`
+- `REF-UNC-002`
+- `REF-UNC-003`
+- `REF-UNC-004`
+- `REF-UNC-005`
 
 ## Missing From Reference Search Table
 
@@ -47,23 +53,11 @@ These references exist in the tracking files but have not yet been inserted into
 
 ### Present in search table but not manuscript
 
-- `REF-REPORT-003`
 - `REF-SHIFT-004`
-- `REF-UNC-001`
-- `REF-UNC-002`
-- `REF-UNC-003`
-- `REF-UNC-004`
-- `REF-UNC-005`
 
 ### Present in reference list but not manuscript
 
-- `REF-REPORT-003`
 - `REF-SHIFT-004`
-- `REF-UNC-001`
-- `REF-UNC-002`
-- `REF-UNC-003`
-- `REF-UNC-004`
-- `REF-UNC-005`
 
 ## Interpretation
 
