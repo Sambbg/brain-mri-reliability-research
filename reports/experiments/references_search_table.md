@@ -91,3 +91,21 @@ Avoid:
 | CLAIM-LEAK-002 | Patient-level or group-level splitting is important for reducing leakage in radiology ML. | REF-LEAK-001; REF-LEAK-003 |
 | CLAIM-LEAK-003 | Public datasets require overlap auditing before being treated as independent validation sets. | REF-LEAK-001; REF-LEAK-004 |
 | CLAIM-LEAK-004 | D2 should not be used as clean external validation after substantial exact and perceptual overlap with D1 was detected. | REF-LEAK-001; REF-LEAK-002; REF-LEAK-003 |
+
+## Verified Dataset Shift and External Validation References
+
+| ID | Area | Search query | Database / source | Inclusion criteria | Exclusion criteria | Candidate paper title | DOI / URL | Why it is useful | Manuscript section | Status |
+|---|---|---|---|---|---|---|---|---|---|---|
+| REF-SHIFT-001 | External validation in radiology deep learning | external validation deep learning radiologic diagnosis systematic review | Radiology: Artificial Intelligence / PMC | Systematic review of external validation in radiologic DL diagnosis | Single-centre internal validation studies only | External Validation of Deep Learning Algorithms for Radiologic Diagnosis: A Systematic Review | https://doi.org/10.1148/ryai.210064 | Supports the claim that radiology DL models often show reduced performance under external validation | Introduction / Discussion / Limitations | Verified |
+| REF-SHIFT-002 | Medical imaging AI generalisability | assessing generalizability artificial intelligence medical imaging external validation | PMC / PubMed | Review focused on AI generalisability in medical imaging | Non-imaging AI papers | Assessing the generalizability of artificial intelligence in medical imaging | https://pmc.ncbi.nlm.nih.gov/articles/PMC12689012/ | Supports need for validation across institutions, populations, and imaging conditions | Introduction / Discussion | Verified |
+| REF-SHIFT-003 | Domain generalization in medical imaging | domain generalization medical image analysis review dataset shift | arXiv | Review focused on domain generalization in medical image analysis | Non-medical domain generalization only | Domain Generalization for Medical Image Analysis: A Review | https://arxiv.org/abs/2310.08598 | Supports the broader problem of medical image domain shift and generalisation | Introduction / Discussion / Future work | Verified |
+| REF-SHIFT-004 | Shift-data curation in medical imaging | MedShift automated identification shift data medical image dataset curation | PMC | Medical imaging paper focused on identifying shifted datasets for validation/generalisation | Non-medical shift detection only | MedShift: Automated Identification of Shift Data for Medical Image Dataset Curation | https://pmc.ncbi.nlm.nih.gov/articles/PMC10513895/ | Supports the need to identify and curate shifted datasets for robust validation | Methods / Discussion | Verified |
+
+## Dataset Shift Manuscript Claim Mapping
+
+| Claim ID | Manuscript claim | Supporting reference |
+|---|---|---|
+| CLAIM-SHIFT-001 | Strong internal performance does not guarantee external or shifted-domain reliability in medical imaging. | REF-SHIFT-001; REF-SHIFT-002 |
+| CLAIM-SHIFT-002 | External validation should ideally test models across different institutions, patient populations, scanners, or imaging conditions. | REF-SHIFT-001; REF-SHIFT-002 |
+| CLAIM-SHIFT-003 | D3B should be interpreted as glioma-focused domain-shift analysis rather than full four-class external validation. | REF-SHIFT-001; REF-SHIFT-002; REF-SHIFT-003 |
+| CLAIM-SHIFT-004 | Curating shifted medical image datasets is important for evaluating model generalisation. | REF-SHIFT-003; REF-SHIFT-004 |
