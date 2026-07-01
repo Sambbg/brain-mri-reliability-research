@@ -10,7 +10,7 @@ Temperature scaling was fitted using validation-set logits only. The learned tem
 
 ## Temperature
 
-- Learned temperature: `1.159631`
+- Learned temperature: `1.159784`
 
 ## Test Metrics Before and After Temperature Scaling
 
@@ -21,12 +21,12 @@ Temperature scaling was fitted using validation-set logits only. The learned tem
 | macro_f1 | 0.9680 | 0.9680 |
 | mean_confidence | 0.9812 | 0.9759 |
 | confidence_accuracy_gap | 0.0135 | 0.0082 |
-| ece_15_bins | 0.0186 | 0.0152 |
-| brier_score | 0.0533 | 0.0523 |
+| ece_15_bins | 0.0189 | 0.0141 |
+| brier_score | 0.0534 | 0.0523 |
 | negative_log_likelihood | 0.1091 | 0.1034 |
 
 ## Interpretation
 
-Temperature scaling reduced ECE from 0.0186 to 0.0152. NLL also improved from 0.1091 to 0.1034. The confidence-accuracy gap changed from 0.0135 to 0.0082.
+Temperature scaling reduced ECE from 0.0189 to 0.0141. NLL also improved from 0.1091 to 0.1034. The confidence-accuracy gap changed from 0.0135 to 0.0082.
 
 These results are still internal to D1 and should not be interpreted as external reliability evidence. The next major test is whether calibration behaviour changes under cross-dataset evaluation.
