@@ -1,0 +1,28 @@
+venv/
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+.env
+.DS_Store
+
+# Raw and processed datasets must not be committed
+data/raw/*
+data/processed/*
+
+# Large model/checkpoint files
+models/*
+*.pt
+*.pth
+*.ckpt
+*.onnx
+
+# Logs and experiment outputs may become large
+logs/training/*
+results/*
+
+# Experiment runtime outputs
+experiments/*/
+
+# Keep experiment directory structure if needed
+!experiments/.gitkeep
+logs/sync_logs/
