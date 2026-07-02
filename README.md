@@ -113,3 +113,27 @@ research/
 │   ├── training/
 │   └── utils/
 └── README.md
+
+## Update: D3C human glioma domain-shift evaluation
+
+This project was extended with a second shifted-domain dataset, D3C, to provide a
+same-species (human) counterpart to the cross-species canine probe (D3B).
+
+- **D3C source:** UPENN-GBM (TCIA), adult glioblastoma. SpeciesDescription = "Homo sapiens".
+- **Prepared cohort:** 569 patients / 569 series / 2,845 central-slice images (one T1
+  series per patient; post-contrast T1 preferred).
+- **Independence from D1:** exact + perceptual-hash audit found 0 exact and 7 within-class
+  (glioma-glioma) near-duplicate pairs out of ~20M comparisons; 0 cross-class pairs.
+- **Role:** human glioma-focused shifted-domain evaluation of the D1-trained models. Not a
+  full four-class external validation set.
+
+D3B (ICDC-Glioma) is a canine glioma collection and is reported as a cross-species
+out-of-distribution probe rather than as the primary domain-shift result.
+
+Key finding: the three models achieve near-identical internal D1 macro-F1 (~0.96-0.98)
+but diverge sharply in glioma prediction rate under shift (D3C: ResNet18 0.69,
+EfficientNet-B0 0.46, ViT-B/16 0.22), confirming that internal accuracy does not predict
+shifted-domain reliability.
+
+See `D3C_PIPELINE.md` for the full D3C run order.
+

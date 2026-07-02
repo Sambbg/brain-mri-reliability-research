@@ -1,4 +1,0 @@
-Dataset ID,Source / description,Format,Label structure,Samples used,Role in study,Usage decision,Reason
-D1,Primary public brain MRI tumour dataset,2D image dataset,"Four classes: glioma, meningioma, notumor, pituitary",7013 deduplicated images,"Internal training, validation, and testing",Used,"Primary dataset after exact duplicate auditing and leakage-aware splitting"
-D2,Candidate public external validation dataset,2D image dataset,Brain tumour classification labels,Not used for performance claims,Candidate external validation dataset,Rejected,"Exact and perceptual overlap auditing showed substantial overlap with D1"
-D3B,ICDC-Glioma / TCIA-derived glioma-focused DICOM dataset,DICOM converted to 2D PNG central slices,Glioma-focused collection-level label,"265 slices from 53 patients and 53 series",Domain-shift prediction and confidence analysis,Used cautiously,"No D1-D3B exact or pHash near-overlap detected, but not suitable for full four-class external accuracy"

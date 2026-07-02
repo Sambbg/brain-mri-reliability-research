@@ -1,4 +1,0 @@
-Model,Test accuracy,Test balanced accuracy,Test macro-F1,Best validation macro-F1,Best epoch
-E001 ResNet18,0.9667,0.9662,0.9666,0.9704,8
-E002 EfficientNet-B0,0.9676,0.9677,0.968,0.9736,6
-E003 ViT-B/16,0.9581,0.9578,0.9582,0.9667,5

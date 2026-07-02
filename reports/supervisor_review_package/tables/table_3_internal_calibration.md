@@ -1,5 +1,0 @@
-| Model | Temperature | Raw ECE | Scaled ECE | Raw NLL | Scaled NLL | Raw confidence-accuracy gap | Scaled confidence-accuracy gap | Raw Brier score | Scaled Brier score |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| E001 ResNet18 | 1.2328 | 0.0208 | 0.0145 | 0.1176 | 0.1063 | 0.0169 | 0.0106 | 0.0557 | 0.0536 |
-| E002 EfficientNet-B0 | 1.1596 | 0.0186 | 0.0152 | 0.1091 | 0.1034 | 0.0135 | 0.0082 | 0.0533 | 0.0523 |
-| E003 ViT-B/16 | 1.2363 | 0.0198 | 0.0109 | 0.1571 | 0.1451 | 0.0159 | 0.0055 | 0.0689 | 0.0674 |

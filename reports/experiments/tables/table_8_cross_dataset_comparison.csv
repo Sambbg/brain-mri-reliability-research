@@ -1,0 +1,4 @@
+Model,D1 internal macro-F1,D3B glioma rate (canine),D3C glioma rate (human)
+E001 ResNet18,0.9753,0.2943,0.6938
+E002 EfficientNet-B0,0.968,0.4415,0.4626
+E003 ViT-B/16,0.9648,0.4038,0.2179
