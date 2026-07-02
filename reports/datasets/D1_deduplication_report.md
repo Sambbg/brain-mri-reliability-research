@@ -2,8 +2,8 @@
 
 ## Input and Output
 
-- Input manifest: `data/processed/D1_manifest.csv`
-- Output manifest: `data/processed/D1_manifest_deduplicated.csv`
+- Input manifest: `data\processed\D1_manifest.csv`
+- Output manifest: `data\processed\D1_manifest_deduplicated.csv`
 
 ## Summary
 
