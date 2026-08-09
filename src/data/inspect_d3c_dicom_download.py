@@ -2,6 +2,7 @@ from pathlib import Path
 from collections import Counter, defaultdict
 import csv
 
+import numpy as np
 import pydicom
 
 RAW_DIR = Path("data/raw/D3C_upenn_gbm")
@@ -28,6 +29,89 @@ def safe_get(ds, name, default=""):
 
 def read_dicom_header(path: Path):
     return pydicom.dcmread(path, stop_before_pixels=False, force=True)
+
+
+def get_image_orientation(ds):
+    """ImageOrientationPatient as six floats, or None if absent or malformed."""
+    value = getattr(ds, "ImageOrientationPatient", None)
+
+    if value is None:
+        return None
+
+    try:
+        values = [float(v) for v in value]
+    except (TypeError, ValueError):
+        return None
+
+    if len(values) != 6:
+        return None
+
+    return values
+
+
+PLANE_BY_AXIS = {0: "sagittal", 1: "coronal", 2: "axial"}
+
+# An axial series more than this far off the true axial plane is reported separately.
+OBLIQUITY_FLAG_DEGREES = 10.0
+
+
+def derive_plane(iop):
+    """Acquisition plane from the slice normal, not from SeriesDescription.
+
+    ImageOrientationPatient holds two direction cosines, for the image row and column
+    axes. Their cross product is the slice normal. DICOM patient axes are x = left/right,
+    y = anterior/posterior, z = foot/head, so a normal dominated by z is an axial
+    acquisition, by x sagittal, by y coronal.
+
+    This is measured geometry. SeriesDescription is free text and has already proven
+    unreliable for this cohort, so plane and contrast status are both read from headers.
+    """
+    row = np.array(iop[:3], dtype=float)
+    col = np.array(iop[3:], dtype=float)
+
+    normal = np.cross(row, col)
+    norm = float(np.linalg.norm(normal))
+
+    if norm == 0.0:
+        return None, None, None
+
+    normal = normal / norm
+    axis = int(np.argmax(np.abs(normal)))
+    dominance = float(abs(normal[axis]))
+    obliquity_degrees = float(np.degrees(np.arccos(min(1.0, dominance))))
+
+    return PLANE_BY_AXIS[axis], dominance, obliquity_degrees
+
+
+def load_selection_manifest():
+    """Return {SeriesInstanceUID: manifest row} from the authoritative selection."""
+    if not SELECTION_CSV.exists():
+        raise FileNotFoundError(
+            f"Selection manifest not found: {SELECTION_CSV}\n"
+            "Run src/data/select_d3c_upenn_gbm_series.py before this step."
+        )
+
+    with SELECTION_CSV.open(newline="", encoding="utf-8") as f:
+        reader = csv.DictReader(f)
+
+        if "SeriesInstanceUID" not in (reader.fieldnames or []):
+            raise ValueError(f"{SELECTION_CSV} has no SeriesInstanceUID column.")
+
+        rows = list(reader)
+
+    manifest = {}
+    for row in rows:
+        uid = (row.get("SeriesInstanceUID") or "").strip()
+        if not uid:
+            continue
+        if uid in manifest:
+            raise ValueError(f"{SELECTION_CSV} contains duplicate SeriesInstanceUID rows.")
+        manifest[uid] = row
+
+    if not manifest:
+        raise RuntimeError(f"{SELECTION_CSV} lists no SeriesInstanceUIDs.")
+
+    return manifest
 
 
 def load_selected_series_uids():
@@ -106,7 +190,8 @@ def collect_selected_series_files(selected_uids):
 
 
 def main():
-    selected_uids = load_selected_series_uids()
+    manifest = load_selection_manifest()
+    selected_uids = set(manifest)
     files = collect_selected_series_files(selected_uids)
 
     print(f"Selection manifest: {SELECTION_CSV}")
@@ -128,6 +213,11 @@ def main():
     series_dimensions = defaultdict(Counter)
     series_instance_numbers = defaultdict(list)
     series_image_positions = defaultdict(list)
+
+    # Cohort composition, read from headers rather than from SeriesDescription.
+    series_orientations = defaultdict(set)
+    series_first_orientation = {}
+    series_contrast_agents = defaultdict(set)
 
     for idx, path in enumerate(files, start=1):
         if idx % 500 == 0:
@@ -174,6 +264,20 @@ def main():
             if image_position:
                 series_image_positions[series_uid].append(image_position)
 
+            orientation = get_image_orientation(ds)
+            if orientation is not None:
+                series_orientations[series_uid].add(
+                    tuple(round(v, 4) for v in orientation)
+                )
+                # "First slice" is the first file in sorted enumeration order, which is
+                # deterministic; orientation is constant within a well-formed series and
+                # any series where it is not is flagged below.
+                series_first_orientation.setdefault(series_uid, orientation)
+
+            series_contrast_agents[series_uid].add(
+                safe_get(ds, "ContrastBolusAgent", "").strip()
+            )
+
             rows.append({
                 "filepath": str(path),
                 "patient_id": patient_id,
@@ -203,17 +307,35 @@ def main():
             [f"{r}x{c}: {n}" for (r, c), n in dims.most_common()]
         )
 
+        orientation = series_first_orientation.get(series_uid)
+        if orientation is None:
+            plane, dominance, obliquity = "unknown", None, None
+        else:
+            plane, dominance, obliquity = derive_plane(orientation)
+            if plane is None:
+                plane = "degenerate"
+
+        agents = {a for a in series_contrast_agents.get(series_uid, set()) if a}
+        manifest_row = manifest.get(series_uid, {})
+
         series_rows.append({
             "series_instance_uid": series_uid,
             "patient_id": series_patient_ids.get(series_uid, ""),
             "study_instance_uid": series_study_uids.get(series_uid, ""),
             "modality": series_modalities.get(series_uid, ""),
             "series_description": series_descriptions.get(series_uid, ""),
+            "selection_category": manifest_row.get("selection_category", ""),
             "file_count": file_count,
             "pixel_readable_count": series_pixel_readable_counts.get(series_uid, 0),
             "dimension_summary": dim_summary,
             "has_instance_numbers": len(series_instance_numbers[series_uid]) > 0,
             "has_image_position_patient": len(series_image_positions[series_uid]) > 0,
+            "acquisition_plane": plane,
+            "plane_dominance": "" if dominance is None else round(dominance, 6),
+            "obliquity_degrees": "" if obliquity is None else round(obliquity, 3),
+            "orientation_consistent": len(series_orientations.get(series_uid, set())) <= 1,
+            "contrast_bolus_agent": "; ".join(sorted(agents)),
+            "has_contrast_bolus_agent": bool(agents),
         })
 
     with SERIES_SUMMARY_CSV.open("w", newline="", encoding="utf-8") as f:
@@ -223,11 +345,18 @@ def main():
             "study_instance_uid",
             "modality",
             "series_description",
+            "selection_category",
             "file_count",
             "pixel_readable_count",
             "dimension_summary",
             "has_instance_numbers",
             "has_image_position_patient",
+            "acquisition_plane",
+            "plane_dominance",
+            "obliquity_degrees",
+            "orientation_consistent",
+            "contrast_bolus_agent",
+            "has_contrast_bolus_agent",
         ]
         writer = csv.DictWriter(f, fieldnames=fieldnames)
         writer.writeheader()
@@ -283,6 +412,125 @@ def main():
                 f.write(f"- Not in manifest: `{uid}`\n")
             for uid in unreadable_series[:20]:
                 f.write(f"- Selected but unreadable: `{uid}`\n")
+
+        f.write("\n## Cohort Composition\n\n")
+        f.write(
+            "Acquisition plane and contrast status are read from DICOM headers, not "
+            "parsed from SeriesDescription. Plane comes from the slice normal, the cross "
+            "product of the two direction cosines in ImageOrientationPatient. Contrast "
+            "comes from ContrastBolusAgent (0018,0010).\n\n"
+        )
+
+        plane_counts = Counter(row["acquisition_plane"] for row in series_rows)
+        non_axial = [r for r in series_rows if r["acquisition_plane"] != "axial"]
+        oblique_axial = [
+            r for r in series_rows
+            if r["acquisition_plane"] == "axial"
+            and r["obliquity_degrees"] != ""
+            and r["obliquity_degrees"] > OBLIQUITY_FLAG_DEGREES
+        ]
+        inconsistent = [r for r in series_rows if not r["orientation_consistent"]]
+
+        f.write("### Acquisition Plane, Series Level\n\n")
+        f.write("| Plane | Series | Share |\n")
+        f.write("|---|---:|---:|\n")
+        for plane, count in sorted(plane_counts.items(), key=lambda kv: (-kv[1], kv[0])):
+            share = count / len(series_rows) if series_rows else 0.0
+            f.write(f"| {plane} | {count} | {share:.4f} |\n")
+
+        f.write(
+            "\nD1 is axial. Any non-axial series is a plane confound: a difference in "
+            "predictions could reflect acquisition geometry rather than domain shift.\n\n"
+        )
+
+        if non_axial:
+            f.write(f"### Non-Axial Series, Flagged: {len(non_axial)}\n\n")
+            f.write("| PatientID | Plane | Obliquity (deg) | SeriesDescription |\n")
+            f.write("|---|---|---:|---|\n")
+            for row in non_axial[:40]:
+                f.write(
+                    f"| {row['patient_id']} | {row['acquisition_plane']} | "
+                    f"{row['obliquity_degrees']} | "
+                    f"{str(row['series_description']).replace('|', '/')} |\n"
+                )
+            if len(non_axial) > 40:
+                f.write(
+                    f"\n{len(non_axial) - 40} further non-axial series are listed in "
+                    f"`{SERIES_SUMMARY_CSV}`.\n"
+                )
+        else:
+            f.write("### Non-Axial Series, Flagged: 0\n\n")
+            f.write("Every selected series is axial. No plane confound.\n")
+
+        f.write(
+            f"\n### Oblique Axial Series, more than {OBLIQUITY_FLAG_DEGREES:.0f} degrees "
+            f"off plane: {len(oblique_axial)}\n\n"
+        )
+        if oblique_axial:
+            f.write("| PatientID | Obliquity (deg) | SeriesDescription |\n")
+            f.write("|---|---:|---|\n")
+            for row in oblique_axial[:20]:
+                f.write(
+                    f"| {row['patient_id']} | {row['obliquity_degrees']} | "
+                    f"{str(row['series_description']).replace('|', '/')} |\n"
+                )
+        else:
+            f.write("None. Every axial series lies close to the true axial plane.\n")
+
+        f.write(
+            f"\n### Series with Inconsistent Orientation Across Slices: "
+            f"{len(inconsistent)}\n\n"
+        )
+        if inconsistent:
+            f.write(
+                "These series contain slices at more than one orientation, which usually "
+                "means a multi-plane or localizer series slipped through selection.\n\n"
+            )
+            for row in inconsistent[:20]:
+                f.write(
+                    f"- `{row['series_instance_uid']}` "
+                    f"({row['patient_id']}, {row['acquisition_plane']})\n"
+                )
+        else:
+            f.write("None. Every series holds a single consistent orientation.\n")
+
+        with_contrast = [r for r in series_rows if r["has_contrast_bolus_agent"]]
+        agent_counts = Counter(
+            r["contrast_bolus_agent"] for r in series_rows if r["has_contrast_bolus_agent"]
+        )
+
+        f.write("\n### Contrast Status from ContrastBolusAgent\n\n")
+        f.write("| ContrastBolusAgent | Series |\n")
+        f.write("|---|---:|\n")
+        f.write(f"| present | {len(with_contrast)} |\n")
+        f.write(f"| absent or empty | {len(series_rows) - len(with_contrast)} |\n")
+
+        if agent_counts:
+            f.write("\n| Agent value | Series |\n")
+            f.write("|---|---:|\n")
+            for agent, count in agent_counts.most_common(20):
+                f.write(f"| {str(agent).replace('|', '/')} | {count} |\n")
+
+        f.write("\n### Header Contrast versus Description-Based Category\n\n")
+        f.write(
+            "The selection step infers contrast from SeriesDescription. This cross-tab "
+            "checks that inference against the header.\n\n"
+        )
+        f.write("| selection_category | Series | ContrastBolusAgent present |\n")
+        f.write("|---|---:|---:|\n")
+        category_counts = Counter(row["selection_category"] for row in series_rows)
+        for category, count in sorted(category_counts.items()):
+            present = sum(
+                1 for r in series_rows
+                if r["selection_category"] == category and r["has_contrast_bolus_agent"]
+            )
+            f.write(f"| {category or '(unknown)'} | {count} | {present} |\n")
+
+        f.write(
+            "\nIf ContrastBolusAgent is absent across the cohort, contrast status cannot "
+            "be verified from headers at all and remains inferred from free text. Record "
+            "that as a limitation rather than treating the description as confirmation.\n"
+        )
 
         f.write("\n## Modality Counts\n\n")
         f.write("| Modality | Count |\n")
