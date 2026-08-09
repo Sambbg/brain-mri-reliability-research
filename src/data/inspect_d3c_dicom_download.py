@@ -19,6 +19,29 @@ SELECTION_CSV = Path(
 
 DICOM_EXTENSIONS = {".dcm", ""}
 
+# TCIA ships a plain-text licence file inside every downloaded series directory. It is
+# not DICOM, so pydicom's force=True parses it into an essentially empty dataset with no
+# SeriesInstanceUID. Such files are set aside by name and counted in the report; they are
+# never allowed to collapse into a catch-all series bin, which previously made 614
+# licence files appear as one phantom 615th series with a blank PatientID.
+KNOWN_SIDECAR_FILENAMES = {"LICENSE"}
+
+
+def is_dicom_file(path: Path) -> bool:
+    """True if the file carries the DICM magic number at offset 128.
+
+    Checked from the file itself rather than trusting the filename, so a genuine DICOM
+    with an unexpected name is still inspected and a non-DICOM file cannot be read as
+    one.
+    """
+    try:
+        with path.open("rb") as handle:
+            header = handle.read(132)
+    except OSError:
+        return False
+
+    return len(header) >= 132 and header[128:132] == b"DICM"
+
 
 def safe_get(ds, name, default=""):
     value = getattr(ds, name, default)
@@ -217,7 +240,9 @@ def collect_selected_series_files(selected_uids):
             + "\n  ".join(missing_uids[:10])
         )
 
-    files = []
+    dicom_files = []
+    sidecar_files = []
+    unexpected_files = []
     empty_series = []
 
     for series_uid in sorted(selected_uids):
@@ -227,7 +252,13 @@ def collect_selected_series_files(selected_uids):
             empty_series.append(series_uid)
             continue
 
-        files.extend(series_files)
+        for path in series_files:
+            if is_dicom_file(path):
+                dicom_files.append(path)
+            elif path.name.upper() in KNOWN_SIDECAR_FILENAMES:
+                sidecar_files.append(path)
+            else:
+                unexpected_files.append(path)
 
     if empty_series:
         raise RuntimeError(
@@ -235,23 +266,36 @@ def collect_selected_series_files(selected_uids):
             + "\n  ".join(empty_series[:10])
         )
 
-    return files
+    if unexpected_files:
+        raise RuntimeError(
+            f"{len(unexpected_files)} files under {RAW_DIR} are neither DICOM nor a "
+            f"recognised sidecar {sorted(KNOWN_SIDECAR_FILENAMES)}. They are not being "
+            "skipped silently; identify them before inspecting the cohort.\nFirst:\n  "
+            + "\n  ".join(str(p) for p in unexpected_files[:10])
+        )
+
+    return dicom_files, sidecar_files
 
 
 def main():
     manifest = load_selection_manifest()
     selected_uids = set(manifest)
-    files = collect_selected_series_files(selected_uids)
+    files, sidecar_files = collect_selected_series_files(selected_uids)
 
     print(f"Selection manifest: {SELECTION_CSV}")
     print(f"Selected series: {len(selected_uids)}")
-    print(f"Files to inspect: {len(files)}")
+    print(f"DICOM files to inspect: {len(files)}")
+    print(f"Non-DICOM sidecar files set aside: {len(sidecar_files)}")
 
     if not files:
         raise RuntimeError(f"No files found under {RAW_DIR}")
 
     rows = []
     read_errors = []
+    # DICOM files whose SeriesInstanceUID is missing or blank. These abort the run: a
+    # file that claims to be DICOM but cannot say which series it belongs to must not be
+    # counted, binned, or dropped without comment.
+    missing_uid_files = []
 
     series_file_counts = Counter()
     series_pixel_readable_counts = Counter()
@@ -277,7 +321,14 @@ def main():
         try:
             ds = read_dicom_header(path)
 
-            series_uid = safe_get(ds, "SeriesInstanceUID", "UNKNOWN")
+            series_uid = safe_get(ds, "SeriesInstanceUID", "").strip()
+
+            if not series_uid:
+                # No default bucket: an unattributable DICOM is an error, recorded here
+                # and raised after the report is written.
+                missing_uid_files.append(str(path))
+                continue
+
             study_uid = safe_get(ds, "StudyInstanceUID", "")
             patient_id = safe_get(ds, "PatientID", "")
             modality = safe_get(ds, "Modality", "")
@@ -456,7 +507,15 @@ def main():
         f.write(f"- Selection manifest: `{SELECTION_CSV}`\n")
         f.write(f"- Selected series: {len(selected_uids)}\n")
         f.write(f"- Raw directory: `{RAW_DIR}`\n")
-        f.write(f"- Total files found: {len(files)}\n")
+        f.write(f"- DICOM files inspected: {len(files)}\n")
+        f.write(
+            f"- Non-DICOM sidecar files set aside: {len(sidecar_files)} "
+            f"({', '.join(sorted(KNOWN_SIDECAR_FILENAMES))})\n"
+        )
+        f.write(
+            f"- DICOM files with a missing or blank SeriesInstanceUID: "
+            f"{len(missing_uid_files)}\n"
+        )
         f.write(f"- Files successfully read as DICOM: {len(rows)}\n")
         f.write(f"- Read errors: {len(read_errors)}\n")
         f.write(f"- Files with readable pixel arrays: {pixel_readable_total}\n")
@@ -471,7 +530,26 @@ def main():
         )
 
         f.write("## Cohort Integrity\n\n")
-        if not unexpected_series and not unreadable_series:
+
+        f.write(
+            f"{len(sidecar_files)} non-DICOM sidecar files "
+            f"({', '.join(sorted(KNOWN_SIDECAR_FILENAMES))}) were identified by the "
+            "absence of the DICM magic number and set aside before inspection. They are "
+            "excluded from the series accounting but counted here, not dropped in "
+            "silence.\n\n"
+        )
+
+        if missing_uid_files:
+            f.write(
+                f"**{len(missing_uid_files)} DICOM files have a missing or blank "
+                "SeriesInstanceUID.** They cannot be attributed to a series and are not "
+                "assigned to one; this inspection is aborted rather than reported.\n\n"
+            )
+            for path in missing_uid_files[:20]:
+                f.write(f"- `{path}`\n")
+            f.write("\n")
+
+        if not unexpected_series and not unreadable_series and not missing_uid_files:
             f.write(
                 f"The {len(inspected_series)} series inspected match the "
                 f"{len(selected_uids)} series in the selection manifest exactly. No "
@@ -760,7 +838,9 @@ def main():
             for path, err in read_errors[:100]:
                 f.write(f"- `{path}`: {err}\n")
 
-    print(f"Total files found: {len(files)}")
+    print(f"DICOM files inspected: {len(files)}")
+    print(f"Non-DICOM sidecar files set aside: {len(sidecar_files)}")
+    print(f"DICOM files with missing/blank SeriesInstanceUID: {len(missing_uid_files)}")
     print(f"Files read as DICOM: {len(rows)}")
     print(f"Read errors: {len(read_errors)}")
     print(f"Files with readable pixel arrays: {pixel_readable_total}")
@@ -768,6 +848,15 @@ def main():
     print(f"Unique patients: {len(set(row['patient_id'] for row in rows))}")
     print(f"Report written to: {REPORT_PATH}")
     print(f"Series summary CSV written to: {SERIES_SUMMARY_CSV}")
+
+    if missing_uid_files:
+        raise RuntimeError(
+            f"{len(missing_uid_files)} DICOM files have a missing or blank "
+            "SeriesInstanceUID and cannot be attributed to a series. They have not been "
+            "binned under a placeholder or skipped silently; resolve them before "
+            "inspecting the cohort.\nFirst:\n  "
+            + "\n  ".join(missing_uid_files[:10])
+        )
 
     if unexpected_series:
         raise RuntimeError(
