@@ -20,11 +20,12 @@ models/*
 logs/training/*
 results/*
 
-# Experiment runtime outputs
-experiments/*/
-
-# Keep experiment directory structure if needed
-!experiments/.gitkeep
+# Experiment artefacts are provenance evidence and must survive outside this machine,
+# so provenance.json, final_results.json, metadata.json, metrics_history.csv,
+# predictions and confusion matrices are all version-controlled. Only the checkpoints
+# are too large to track. Do not re-ignore the experiments tree: git will not descend
+# into an excluded directory, so a negation inside it cannot bring these files back.
+experiments/**/*.pt
 logs/sync_logs/
 
 data/raw/
