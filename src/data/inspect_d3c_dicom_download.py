@@ -8,6 +8,14 @@ RAW_DIR = Path("data/raw/D3C_upenn_gbm")
 REPORT_PATH = Path("reports/datasets/D3C_dicom_inspection_report.md")
 SERIES_SUMMARY_CSV = Path("reports/datasets/D3C_dicom_series_summary.csv")
 
+# The authoritative selection, produced by src/data/select_d3c_upenn_gbm_series.py.
+# This step is driven by that manifest rather than by globbing RAW_DIR: a glob silently
+# sweeps in any series left behind by an earlier, different selection, which is how a
+# defective D3C cohort was produced before.
+SELECTION_CSV = Path(
+    "reports/datasets/d3c_upenn_gbm_series_selection/selected_series_one_per_patient.csv"
+)
+
 DICOM_EXTENSIONS = {".dcm", ""}
 
 
@@ -22,16 +30,88 @@ def read_dicom_header(path: Path):
     return pydicom.dcmread(path, stop_before_pixels=False, force=True)
 
 
-def find_candidate_files():
+def load_selected_series_uids():
+    """Read the SeriesInstanceUIDs the selection step chose, one per patient."""
+    if not SELECTION_CSV.exists():
+        raise FileNotFoundError(
+            f"Selection manifest not found: {SELECTION_CSV}\n"
+            "Run src/data/select_d3c_upenn_gbm_series.py before this step."
+        )
+
+    with SELECTION_CSV.open(newline="", encoding="utf-8") as f:
+        reader = csv.DictReader(f)
+
+        if "SeriesInstanceUID" not in (reader.fieldnames or []):
+            raise ValueError(f"{SELECTION_CSV} has no SeriesInstanceUID column.")
+
+        uids = [(row.get("SeriesInstanceUID") or "").strip() for row in reader]
+
+    uids = [uid for uid in uids if uid]
+
+    if not uids:
+        raise RuntimeError(f"{SELECTION_CSV} lists no SeriesInstanceUIDs.")
+
+    unique_uids = set(uids)
+    if len(unique_uids) != len(uids):
+        raise ValueError(f"{SELECTION_CSV} contains duplicate SeriesInstanceUID rows.")
+
+    return unique_uids
+
+
+def collect_selected_series_files(selected_uids):
+    """Enumerate files for the selected series only, aborting on orphans or gaps."""
     if not RAW_DIR.exists():
         raise FileNotFoundError(f"Raw D3C directory not found: {RAW_DIR}")
 
-    files = [p for p in RAW_DIR.rglob("*") if p.is_file()]
+    on_disk_uids = {p.name for p in RAW_DIR.iterdir() if p.is_dir()}
+
+    orphan_uids = sorted(on_disk_uids - selected_uids)
+    if orphan_uids:
+        raise RuntimeError(
+            f"{len(orphan_uids)} series directories under {RAW_DIR} are not listed in "
+            f"{SELECTION_CSV}. These are orphans from a different selection and must not "
+            "be inspected as part of D3C. Clear the raw directory and re-run "
+            "src/data/download_d3c_selected_series.py.\nFirst orphans:\n  "
+            + "\n  ".join(orphan_uids[:10])
+        )
+
+    missing_uids = sorted(selected_uids - on_disk_uids)
+    if missing_uids:
+        raise RuntimeError(
+            f"{len(missing_uids)} selected series are missing from {RAW_DIR}. The "
+            "downloaded cohort does not match the selected cohort. Re-run "
+            "src/data/download_d3c_selected_series.py.\nFirst missing:\n  "
+            + "\n  ".join(missing_uids[:10])
+        )
+
+    files = []
+    empty_series = []
+
+    for series_uid in sorted(selected_uids):
+        series_files = [p for p in (RAW_DIR / series_uid).rglob("*") if p.is_file()]
+
+        if not series_files:
+            empty_series.append(series_uid)
+            continue
+
+        files.extend(series_files)
+
+    if empty_series:
+        raise RuntimeError(
+            f"{len(empty_series)} selected series directories contain no files.\n  "
+            + "\n  ".join(empty_series[:10])
+        )
+
     return files
 
 
 def main():
-    files = find_candidate_files()
+    selected_uids = load_selected_series_uids()
+    files = collect_selected_series_files(selected_uids)
+
+    print(f"Selection manifest: {SELECTION_CSV}")
+    print(f"Selected series: {len(selected_uids)}")
+    print(f"Files to inspect: {len(files)}")
 
     if not files:
         raise RuntimeError(f"No files found under {RAW_DIR}")
@@ -158,19 +238,53 @@ def main():
     dimension_counts = Counter((row["rows"], row["columns"]) for row in rows)
     pixel_readable_total = sum(1 for row in rows if row["pixel_readable"])
 
+    # Header-level cohort check. The directory-level check above compares directory
+    # names; this compares the SeriesInstanceUID actually recorded in each DICOM, so a
+    # directory holding files from some other series is caught too. Reports are written
+    # first so the evidence survives the abort.
+    inspected_series = set(series_file_counts)
+    unexpected_series = sorted(inspected_series - selected_uids)
+    unreadable_series = sorted(selected_uids - inspected_series)
+
     with REPORT_PATH.open("w", encoding="utf-8") as f:
         f.write("# D3C DICOM Inspection Report\n\n")
 
         f.write("## Input\n\n")
+        f.write(f"- Selection manifest: `{SELECTION_CSV}`\n")
+        f.write(f"- Selected series: {len(selected_uids)}\n")
         f.write(f"- Raw directory: `{RAW_DIR}`\n")
         f.write(f"- Total files found: {len(files)}\n")
         f.write(f"- Files successfully read as DICOM: {len(rows)}\n")
         f.write(f"- Read errors: {len(read_errors)}\n")
         f.write(f"- Files with readable pixel arrays: {pixel_readable_total}\n")
         f.write(f"- Unique series: {len(series_file_counts)}\n")
-        f.write(f"- Unique patients: {len(set(row['patient_id'] for row in rows))}\n\n")
+        f.write(f"- Unique patients: {len(set(row['patient_id'] for row in rows))}\n")
+        f.write(
+            "- Series not listed in the selection manifest: "
+            f"{len(unexpected_series)}\n"
+        )
+        f.write(
+            f"- Selected series with no readable DICOM: {len(unreadable_series)}\n\n"
+        )
 
-        f.write("## Modality Counts\n\n")
+        f.write("## Cohort Integrity\n\n")
+        if not unexpected_series and not unreadable_series:
+            f.write(
+                f"The {len(inspected_series)} series inspected match the "
+                f"{len(selected_uids)} series in the selection manifest exactly. No "
+                "orphan series were included.\n"
+            )
+        else:
+            f.write(
+                "This inspection does not match the selection manifest and the cohort "
+                "must not be used until it does.\n\n"
+            )
+            for uid in unexpected_series[:20]:
+                f.write(f"- Not in manifest: `{uid}`\n")
+            for uid in unreadable_series[:20]:
+                f.write(f"- Selected but unreadable: `{uid}`\n")
+
+        f.write("\n## Modality Counts\n\n")
         f.write("| Modality | Count |\n")
         f.write("|---|---:|\n")
         for modality, count in sorted(modality_counts.items()):
@@ -206,9 +320,11 @@ def main():
         f.write("\n## Interpretation\n\n")
         f.write(
             "This inspection verifies that the selected D3C DICOM series were downloaded "
-            "and can be read with pydicom. No image conversion or slice selection is performed "
-            "in this step. The next step is to create a reproducible D3C slice-conversion script "
-            "using a fixed central-slice rule.\n"
+            "and can be read with pydicom. Series are enumerated from the selection "
+            "manifest, not by globbing the raw directory, so only the selected cohort is "
+            "inspected. No image conversion or slice selection is performed in this step. "
+            "The next step is to create a reproducible D3C slice-conversion script using a "
+            "fixed central-slice rule.\n"
         )
 
         if read_errors:
@@ -224,6 +340,25 @@ def main():
     print(f"Unique patients: {len(set(row['patient_id'] for row in rows))}")
     print(f"Report written to: {REPORT_PATH}")
     print(f"Series summary CSV written to: {SERIES_SUMMARY_CSV}")
+
+    if unexpected_series:
+        raise RuntimeError(
+            f"{len(unexpected_series)} inspected series are not in {SELECTION_CSV}. "
+            "Orphan series must not be included in D3C.\nFirst:\n  "
+            + "\n  ".join(unexpected_series[:10])
+        )
+
+    if unreadable_series:
+        raise RuntimeError(
+            f"{len(unreadable_series)} selected series produced no readable DICOM. "
+            "The inspected cohort is incomplete.\nFirst:\n  "
+            + "\n  ".join(unreadable_series[:10])
+        )
+
+    print(
+        f"Cohort integrity OK: {len(inspected_series)} series inspected, "
+        f"matching the {len(selected_uids)} selected."
+    )
 
 
 if __name__ == "__main__":

@@ -19,6 +19,14 @@ OUT_DIR = Path("data/processed/D3C_upenn_gbm_selected_slices")
 MANIFEST_PATH = Path("data/processed/D3C_selected_slices_manifest.csv")
 REPORT_PATH = Path("reports/datasets/D3C_slice_conversion_report.md")
 
+# The authoritative selection, produced by src/data/select_d3c_upenn_gbm_series.py.
+# Conversion is driven by that manifest rather than by globbing RAW_DIR: a glob silently
+# converts any series left behind by an earlier, different selection, which is how a
+# defective D3C cohort was produced before.
+SELECTION_CSV = Path(
+    "reports/datasets/d3c_upenn_gbm_series_selection/selected_series_one_per_patient.csv"
+)
+
 DATASET_ID = "D3C_upenn_gbm"
 LABEL = "glioma"
 LABEL_SOURCE = "collection_level_upenn_gbm"
@@ -119,10 +127,69 @@ def save_png_from_dicom_path(path, out_path):
     return ds
 
 
-def collect_series_headers():
+def load_selected_series_uids():
+    """Read the SeriesInstanceUIDs the selection step chose, one per patient."""
+    if not SELECTION_CSV.exists():
+        raise FileNotFoundError(
+            "Selection manifest not found: " + str(SELECTION_CSV) + chr(10)
+            + "Run src/data/select_d3c_upenn_gbm_series.py before this step."
+        )
+
+    with SELECTION_CSV.open(newline="", encoding="utf-8") as f:
+        reader = csv.DictReader(f)
+
+        if "SeriesInstanceUID" not in (reader.fieldnames or []):
+            raise ValueError(str(SELECTION_CSV) + " has no SeriesInstanceUID column.")
+
+        uids = [(row.get("SeriesInstanceUID") or "").strip() for row in reader]
+
+    uids = [uid for uid in uids if uid]
+
+    if not uids:
+        raise RuntimeError(str(SELECTION_CSV) + " lists no SeriesInstanceUIDs.")
+
+    unique_uids = set(uids)
+    if len(unique_uids) != len(uids):
+        raise ValueError(str(SELECTION_CSV) + " contains duplicate SeriesInstanceUID rows.")
+
+    return unique_uids
+
+
+def collect_selected_series_files(selected_uids):
+    """Enumerate files for the selected series only, aborting on orphans or gaps."""
     if not RAW_DIR.exists():
         raise FileNotFoundError("Raw directory not found: " + str(RAW_DIR))
-    files = [p for p in RAW_DIR.rglob("*") if p.is_file()]
+
+    on_disk_uids = {p.name for p in RAW_DIR.iterdir() if p.is_dir()}
+
+    orphan_uids = sorted(on_disk_uids - selected_uids)
+    if orphan_uids:
+        raise RuntimeError(
+            str(len(orphan_uids)) + " series directories under " + str(RAW_DIR)
+            + " are not listed in " + str(SELECTION_CSV) + ". These are orphans from a "
+            "different selection and must not be converted into D3C. Clear the raw "
+            "directory and re-run src/data/download_d3c_selected_series.py." + chr(10)
+            + "First orphans:" + chr(10) + "  " + (chr(10) + "  ").join(orphan_uids[:10])
+        )
+
+    missing_uids = sorted(selected_uids - on_disk_uids)
+    if missing_uids:
+        raise RuntimeError(
+            str(len(missing_uids)) + " selected series are missing from " + str(RAW_DIR)
+            + ". The downloaded cohort does not match the selected cohort. Re-run "
+            "src/data/download_d3c_selected_series.py." + chr(10)
+            + "First missing:" + chr(10) + "  " + (chr(10) + "  ").join(missing_uids[:10])
+        )
+
+    files = []
+    for series_uid in sorted(selected_uids):
+        files.extend([p for p in (RAW_DIR / series_uid).rglob("*") if p.is_file()])
+
+    return files
+
+
+def collect_series_headers(selected_uids):
+    files = collect_selected_series_files(selected_uids)
     series = defaultdict(list)
     valid = 0
     for path in tqdm(files, desc="Scanning DICOM headers", unit="file", ncols=80):
@@ -131,6 +198,27 @@ def collect_series_headers():
             continue
         valid += 1
         series[safe_get(ds, "SeriesInstanceUID", "UNKNOWN")].append((path, ds))
+
+    # Header-level cohort check, before any PNG is written. The directory check above
+    # compares directory names; this compares the SeriesInstanceUID recorded in each
+    # DICOM, so a directory holding files from another series is caught too.
+    unexpected_series = sorted(set(series) - selected_uids)
+    if unexpected_series:
+        raise RuntimeError(
+            str(len(unexpected_series)) + " scanned series are not in "
+            + str(SELECTION_CSV) + ". Orphan series must not be converted into D3C."
+            + chr(10) + "First:" + chr(10) + "  "
+            + (chr(10) + "  ").join(unexpected_series[:10])
+        )
+
+    unreadable_series = sorted(selected_uids - set(series))
+    if unreadable_series:
+        raise RuntimeError(
+            str(len(unreadable_series)) + " selected series produced no readable MR "
+            "DICOM header. The cohort is incomplete." + chr(10) + "First:" + chr(10)
+            + "  " + (chr(10) + "  ").join(unreadable_series[:10])
+        )
+
     return series, len(files), valid
 
 
@@ -139,7 +227,12 @@ def main():
     MANIFEST_PATH.parent.mkdir(parents=True, exist_ok=True)
     REPORT_PATH.parent.mkdir(parents=True, exist_ok=True)
 
-    series, total_files, valid_files = collect_series_headers()
+    selected_uids = load_selected_series_uids()
+
+    print("Selection manifest: " + str(SELECTION_CSV))
+    print("Selected series: " + str(len(selected_uids)))
+
+    series, total_files, valid_files = collect_series_headers(selected_uids)
 
     manifest_rows = []
     total_series = len(series)
@@ -214,10 +307,16 @@ def main():
     patients = sorted(set(r["patient_id"] for r in manifest_rows))
     with REPORT_PATH.open("w", encoding="utf-8") as f:
         f.write("# D3C Slice Conversion Report - UPENN-GBM (human)" + chr(10))
+        f.write("- Selection manifest: `" + str(SELECTION_CSV) + "`" + chr(10))
+        f.write("- Selected series: " + str(len(selected_uids)) + chr(10))
         f.write("- Valid MR files: " + str(valid_files) + chr(10))
         f.write("- Series: " + str(total_series) + chr(10))
         f.write("- Images written: " + str(len(manifest_rows)) + chr(10))
         f.write("- Patients: " + str(len(patients)) + chr(10))
+        f.write(
+            "- Series converted match the selection manifest exactly; no orphan series "
+            "were included." + chr(10)
+        )
 
     print("")
     print("DONE. images=" + str(len(manifest_rows)) + " patients=" + str(len(patients)) + " series=" + str(total_series))
