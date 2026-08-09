@@ -2,8 +2,8 @@
 
 ## Input and Output
 
-- Input manifest: `data/processed/D1_manifest_deduplicated.csv`
-- Output manifest: `data/processed/D1_manifest_deduplicated_phash.csv`
+- Input manifest: `data\processed\D1_manifest_deduplicated.csv`
+- Output manifest: `data\processed\D1_manifest_deduplicated_phash.csv`
 - Total rows processed: 7013
 
 ## Hash Methods

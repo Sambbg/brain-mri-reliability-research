@@ -26,3 +26,7 @@ experiments/*/
 # Keep experiment directory structure if needed
 !experiments/.gitkeep
 logs/sync_logs/
+
+data/raw/
+
+data/raw/

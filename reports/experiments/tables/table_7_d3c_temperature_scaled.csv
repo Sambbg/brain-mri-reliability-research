@@ -1,0 +1,4 @@
+Model,Temperature,Raw glioma prediction rate,Scaled glioma prediction rate,Raw mean max confidence,Scaled mean max confidence,Raw mean entropy,Scaled mean entropy
+E001 ResNet18,1.2725,0.6938,0.6938,0.8315,0.7877,0.4279,0.5401
+E002 EfficientNet-B0,1.1598,0.4626,0.4626,0.8033,0.7717,0.5195,0.6034
+E003 ViT-B/16,1.377,0.2179,0.2179,0.9115,0.8744,0.2261,0.3332
