@@ -17,6 +17,45 @@ is committed on `main`. No models were retrained and no results were regenerated
 | `7098e1f` | Header-based cohort composition in the D3C inspection: acquisition plane from the slice normal, contrast from `ContrastBolusAgent`, new columns in the series summary CSV. |
 | `94b4fc8` | Pre/post contrast from `ContrastBolusStartTime` versus `AcquisitionTime`, with field coverage reported before any verdict. |
 
+## Retraction: D3C is not skull-stripped
+
+**Claim withdrawn.** D3C was recorded in `CLAUDE.md`, in this file, and in statements
+made during the session as "100% Processed_CaPTk (skull-stripped, atlas-registered)",
+with skull stripping treated as a cohort-wide confound requiring a control on the D1
+test split.
+
+**How it went wrong.** The `Processed_CaPTk` string was read as evidence of skull
+stripping. It is not: CaPTk preprocessing covers reorientation, co-registration and
+resampling, and stripping is a separate step that was not applied to the DICOM series in
+this collection. Confirming that all 614 series carry the string confirmed only that —
+it was then reported as confirming the confound "at 100%", which the evidence never
+supported.
+
+**Evidence** (`reports/datasets/D3C_skull_stripping_audit.md`, commit `3c3f677`;
+40 sampled D3C series, central slice each, against 40 matched D1 glioma images):
+
+| Metric | D3C | D1 |
+|---|---|---|
+| Images with a masked background | **0 / 40** | 0 / 40 |
+| Air region exactly zero (1.0 = masked) | 0.262 [0.122–0.685] | 0.373 [0.049–0.839] |
+| Corner non-zero fraction | 0.540 | 0.280 |
+| Outer ring brighter than brain core | 0.256 | 0.198 |
+
+Skull stripping sets everything outside the brain to exactly zero; no D3C image shows
+that. A quarter of outer-ring pixels are brighter than the brain core, the T1 scalp-fat
+signature. Measurements on the source DICOM are identical to those on the converted
+PNGs, so the conversion is not responsible. D3C is *less* masked than D1, so there is no
+stripping differential between the cohorts.
+
+**Corrected severity.** From "known confound requiring a dedicated control experiment"
+to "not a confound; no control required". The planned skull-stripping control on the D1
+test split is removed from the outstanding work.
+
+**What survives.** D3C is co-registered, resampled and intensity-normalised by CaPTk
+while D1 is not. Those are genuine preprocessing differences and a real domain shift
+component, and they stay as a stated limitation — but they are not skull removal and do
+not justify the stronger claim.
+
 ## Two defects worth remembering
 
 **`groupby("PatientID").first()`** returns the first *non-null value of each column
@@ -64,8 +103,14 @@ not included. To be confirmed by the full inspection run.
   consistent with de-identification. **Pre versus post contrast cannot be verified from
   headers for D3C and remains inferred from `SeriesDescription`; this is a limitation,
   not a verified property.** The 42 `secondary_t1` series cannot be resolved.
-- All 614 selected series are `Processed_CaPTk`, confirming the skull-stripping confound
-  at 100%.
+- All 614 selected series are `Processed_CaPTk`. **This does not mean skull-stripped.**
+  An earlier note in this file, and a statement made during the session, took the
+  `Processed_CaPTk` string as confirmation of a skull-stripping confound "at 100%". That
+  was wrong: all that had been confirmed was that every series carries the string. A
+  quantitative audit (`reports/datasets/D3C_skull_stripping_audit.md`, commit `3c3f677`)
+  shows D3C retains extracranial anatomy cohort-wide — 0 of 40 sampled images have a
+  masked background, and D3C is less masked than D1 on every measure. See the retraction
+  below.
 
 **No selection change has been made** on the basis of these findings, per instruction.
 
@@ -118,5 +163,6 @@ not included. To be confirmed by the full inspection run.
 - `src/stats/` remains unbuilt: Wilson intervals, patient-clustered bootstrap, McNemar
   with Holm, mixed-effects logistic regression.
 - Single seed (42) only; the 5-seed × 3-architecture sweep has not begun.
-- The D3C skull-stripping confound still needs a skull-stripping control on the D1 test
-  split.
+- ~~The D3C skull-stripping confound still needs a skull-stripping control on the D1
+  test split.~~ **Withdrawn.** D3C is not skull-stripped, so no such control is
+  required. See the retraction below.

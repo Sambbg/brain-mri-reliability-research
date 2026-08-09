@@ -29,8 +29,19 @@ reliability in brain MRI tumour classification.
   1.2725/1.1598/1.3770, macro-F1 0.9753/-/0.9648. Same split, different checkpoints.
   All results must be regenerated from a single frozen run set.
 - Run A checkpoints archived at ~/research_ARCHIVE_RUN_A/.
-- D3C is 100% Processed_CaPTk (skull-stripped, atlas-registered). Known confound
-  requiring a skull-stripping control on the D1 test split.
+- D3C is 100% Processed_CaPTk. **It is NOT skull-stripped** — this corrects an earlier
+  entry here that called it skull-stripped and required a skull-stripping control on the
+  D1 test split. Measured on 40 sampled series against 40 matched D1 glioma images
+  (`reports/datasets/D3C_skull_stripping_audit.md`): 0 of 40 D3C images have a masked
+  background, air is only 26% exactly-zero at the median where a mask would give 1.0,
+  corners are 54% non-zero, and 26% of outer-ring pixels are brighter than the brain
+  core, which is the T1 scalp-fat signature. D3C is if anything *less* masked than D1
+  (air exactly-zero 0.262 vs 0.373), so there is no stripping differential and no
+  confound in that direction. `Processed_CaPTk` denotes reorientation, co-registration
+  and resampling, not stripping. **No skull-stripping control is needed.**
+- The weaker preprocessing differences remain a stated limitation: D3C is
+  co-registered, resampled and intensity-normalised by CaPTk, while D1 is not. That is a
+  genuine domain difference and belongs in the limitations, but it is not skull removal.
 - No statistical inference exists in the repo yet. src/stats/ is to be built:
   Wilson intervals, patient-clustered bootstrap, McNemar with Holm, mixed-effects
   logistic regression.
