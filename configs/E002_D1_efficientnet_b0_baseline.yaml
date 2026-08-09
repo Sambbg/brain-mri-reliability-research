@@ -1,47 +1,38 @@
+experiment:
+  id: E002
+  name: D1_internal_leakage_aware_efficientnet_b0_baseline
+
 dataset:
   dataset_id: D1
   split_csv: data/splits/D1_leakage_aware_split.csv
-  image_root: .
-  class_names:
-  - glioma
-  - meningioma
-  - notumor
-  - pituitary
+  classes:
+    - glioma
+    - meningioma
+    - notumor
+    - pituitary
+
 model:
   architecture: efficientnet_b0
   pretrained: true
   num_classes: 4
-training:
-  image_size: 224
-  batch_size: 32
-  num_epochs: 20
-  early_stopping_patience: 5
-  learning_rate: 0.0001
-  weight_decay: 0.0001
-  optimizer: adamw
-  scheduler: cosine
-  num_workers: 4
-  seed: 42
-  epochs: 20
-  early_stopping:
-    enabled: true
-    patience: 5
-outputs:
-  experiment_dir: experiments/E002_D1_efficientnet_b0_baseline
-  save_best_model: true
-  monitor_metric: val_macro_f1
-  output_dir: experiments/E002_D1_efficientnet_b0_baseline
-experiment:
-  id: E002
-  name: D1_internal_leakage_aware_efficientnet_b0_baseline
+
 data_loading:
   image_size: 224
   batch_size: 32
   num_workers: 4
   pin_memory: true
-optimizer:
-  name: adamw
+
+training:
+  seed: 42
+  epochs: 20
+  optimizer: adamw
   learning_rate: 0.0001
   weight_decay: 0.0001
-scheduler:
-  name: cosine
+  early_stopping:
+    enabled: true
+    patience: 5
+    monitor: val_macro_f1
+    mode: max
+
+outputs:
+  output_dir: experiments/E002_D1_efficientnet_b0_baseline
