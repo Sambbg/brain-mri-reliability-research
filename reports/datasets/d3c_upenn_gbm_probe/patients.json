@@ -592,6 +592,16 @@
     "Authorized": 1
   },
   {
+    "PatientId": "UPENN-GBM-00041",
+    "PatientName": "UPENN-GBM-00041",
+    "PatientSex": "M",
+    "Collection": "UPENN-GBM",
+    "Phantom": "NO",
+    "SpeciesCode": "337915000",
+    "SpeciesDescription": "Homo sapiens",
+    "Authorized": 1
+  },
+  {
     "PatientId": "UPENN-GBM-00063",
     "PatientName": "UPENN-GBM-00063",
     "PatientSex": "F",
@@ -2633,16 +2643,6 @@
     "Authorized": 1
   },
   {
-    "PatientId": "UPENN-GBM-00041",
-    "PatientName": "UPENN-GBM-00041",
-    "PatientSex": "M",
-    "Collection": "UPENN-GBM",
-    "Phantom": "NO",
-    "SpeciesCode": "337915000",
-    "SpeciesDescription": "Homo sapiens",
-    "Authorized": 1
-  },
-  {
     "PatientId": "UPENN-GBM-00169",
     "PatientName": "UPENN-GBM-00169",
     "PatientSex": "F",
@@ -2756,6 +2756,16 @@
     "PatientId": "UPENN-GBM-00197",
     "PatientName": "UPENN-GBM-00197",
     "PatientSex": "M",
+    "Collection": "UPENN-GBM",
+    "Phantom": "NO",
+    "SpeciesCode": "337915000",
+    "SpeciesDescription": "Homo sapiens",
+    "Authorized": 1
+  },
+  {
+    "PatientId": "UPENN-GBM-00152",
+    "PatientName": "UPENN-GBM-00152",
+    "PatientSex": "F",
     "Collection": "UPENN-GBM",
     "Phantom": "NO",
     "SpeciesCode": "337915000",
@@ -3436,16 +3446,6 @@
   {
     "PatientId": "UPENN-GBM-00205",
     "PatientName": "UPENN-GBM-00205",
-    "PatientSex": "F",
-    "Collection": "UPENN-GBM",
-    "Phantom": "NO",
-    "SpeciesCode": "337915000",
-    "SpeciesDescription": "Homo sapiens",
-    "Authorized": 1
-  },
-  {
-    "PatientId": "UPENN-GBM-00152",
-    "PatientName": "UPENN-GBM-00152",
     "PatientSex": "F",
     "Collection": "UPENN-GBM",
     "Phantom": "NO",

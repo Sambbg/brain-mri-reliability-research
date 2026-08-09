@@ -1,7 +1,7 @@
-# D3C Acquisition Log ? UPENN-GBM Selected Series
+# D3C Acquisition Log - UPENN-GBM Selected Series
 
 ## Acquisition Date
-2026-07-02T18:04:19
+2026-08-09T23:26:31
 
 ## Dataset
 UPENN-GBM
@@ -13,7 +13,7 @@ Glioma-focused external domain-shift candidate. This dataset is not a direct fou
 `UPENN-GBM`
 
 ## Local Raw Path
-`data\raw\D3C_upenn_gbm`
+`data/raw/D3C_upenn_gbm`
 
 ## Download Method
 Downloaded selected SeriesInstanceUIDs using `tcia_utils.nbia.downloadSeries`.
@@ -23,29 +23,36 @@ nbia.downloadSeries(series_uids, input_type='list', path='data/raw/D3C_upenn_gbm
 ```
 
 ## Selection Rule
-At most one eligible T1-like series was selected per patient according to `reports/datasets/D3C_sequence_selection_protocol.md`.
+This script performs no selection of its own. It downloads exactly the SeriesInstanceUIDs listed in `reports/datasets/d3c_upenn_gbm_series_selection/selected_series_one_per_patient.csv`, which is produced by `src/data/select_d3c_upenn_gbm_series.py` according to `reports/datasets/D3C_sequence_selection_protocol.md`.
 
-Priority:
+Priority applied by the selection step:
 
 1. Preferred T1 post-contrast / contrast-enhanced anatomical series.
 2. Secondary non-contrast T1 anatomical series.
 
 ## Selected Series Summary
 
-- Selected patients: 575
-- Selected series: 575
+- Selection manifest: `reports/datasets/d3c_upenn_gbm_series_selection/selected_series_one_per_patient.csv`
+- Selected patients: 614
+- Selected series: 614
+- Series present on disk after download: 614
+- Failed series: 0
 
 ## Selected Category Counts
 
 | Category | Count |
 |---|---:|
-| preferred_t1_postcontrast | 35 |
-| secondary_t1 | 540 |
+| preferred_t1_postcontrast | 568 |
+| secondary_t1 | 46 |
 
 ## Download Metadata
 
-- Download metadata rows: 569
-- Download metadata file: `reports\datasets\d3c_selected_series_download\download_metadata.csv`
+- Download metadata rows: 614
+- Download metadata file: `reports/datasets/d3c_selected_series_download/download_metadata.csv`
+
+## Download Failures
+
+None. All 614 selected series are present on disk, so the downloaded cohort matches the selected cohort exactly.
 
 ## Important Limitation
 
