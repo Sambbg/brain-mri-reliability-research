@@ -43,6 +43,7 @@ from wilson import wilson_interval, wilson_interval_from_flags, z_for_confidence
 
 
 FAILURES = []
+SKIPPED = []
 PASSED = 0
 
 
@@ -54,6 +55,11 @@ def check(name, condition, detail=""):
     else:
         FAILURES.append((name, detail))
         print(f"  FAIL  {name}  {detail}")
+
+
+def skip(name, reason):
+    SKIPPED.append((name, reason))
+    print(f"  SKIP  {name}  {reason}")
 
 
 def close(a, b, tol=1e-9):
@@ -608,6 +614,175 @@ def test_mixed_effects():
                  np.ones((4, 1)), np.array([0.0, 1.0, 2.0, 1.0]), np.arange(4)))
 
 
+# ----------------------------------------------------------------------------------
+# Cross-validation against established implementations
+# ----------------------------------------------------------------------------------
+
+# Zeger-Liang attenuation constant: c = 16 * sqrt(3) / (15 * pi).
+ZEGER_LIANG_C_SQUARED = (16.0 * math.sqrt(3.0) / (15.0 * math.pi)) ** 2
+
+
+def cluster_log_likelihood_by_quadrature(eta, y, sigma):
+    """Marginal log-likelihood of one cluster by adaptive quadrature.
+
+    Independent of the Gauss-Hermite machinery, so agreement checks the integration
+    itself rather than restating it.
+    """
+    from scipy.integrate import quad
+    from scipy.stats import norm as normal
+
+    def integrand(u):
+        linear = eta + u
+        log_probability = float(np.sum(y * linear - np.logaddexp(0.0, linear)))
+        return math.exp(log_probability) * float(normal.pdf(u, 0.0, sigma))
+
+    value, _ = quad(integrand, -12.0 * sigma, 12.0 * sigma, limit=400)
+
+    return math.log(value)
+
+
+def test_mixed_effects_cross_validation():
+    print("\nMixed model cross-validation against established implementations")
+
+    # 1. The likelihood itself, against adaptive quadrature. This needs no third party
+    #    and is exact up to integration tolerance.
+    rng = np.random.default_rng(404)
+    n_clusters, per_cluster, sigma = 40, 5, 0.9
+    eta_all, y_all, group_all = [], [], []
+
+    for cluster in range(n_clusters):
+        eta = rng.normal(0.0, 1.0, size=per_cluster)
+        u = rng.normal(0.0, sigma)
+        probability = 1.0 / (1.0 + np.exp(-(eta + u)))
+        y_all.append((rng.random(per_cluster) < probability).astype(float))
+        eta_all.append(eta)
+        group_all.append(np.full(per_cluster, cluster))
+
+    eta_flat = np.concatenate(eta_all)
+    y_flat = np.concatenate(y_all)
+    group_flat = np.concatenate(group_all).astype(int)
+
+    X_offset = eta_flat.reshape(-1, 1)
+    nodes, log_weights = gauss_hermite(61)
+    gauss_hermite_total = marginal_log_likelihood(
+        [1.0], sigma, X_offset, y_flat, group_flat, n_clusters, nodes, log_weights
+    )
+    quadrature_total = sum(
+        cluster_log_likelihood_by_quadrature(eta_all[i], y_all[i], sigma)
+        for i in range(n_clusters)
+    )
+    relative = abs(gauss_hermite_total - quadrature_total) / abs(quadrature_total)
+    check(
+        "Gauss-Hermite log-likelihood matches adaptive quadrature",
+        relative < 1e-8,
+        f"GH {gauss_hermite_total:.10f} vs quad {quadrature_total:.10f}, "
+        f"relative {relative:.3e}",
+    )
+
+    try:
+        import pandas as pd
+        from statsmodels.genmod.bayes_mixed_glm import BinomialBayesMixedGLM
+        from statsmodels.genmod.cov_struct import Exchangeable
+        from statsmodels.genmod.families import Binomial
+        from statsmodels.genmod.generalized_estimating_equations import GEE
+        import statsmodels
+    except ImportError as exc:
+        skip("statsmodels cross-validation", f"statsmodels unavailable ({exc})")
+        return
+
+    print(f"        statsmodels {statsmodels.__version__}")
+
+    betas_true = [0.5, -1.0, -2.0]
+    sigma_true = 1.2
+    outcomes, labels, patient_ids = simulate_d3c_like(
+        n_patients=300, slices_per_patient=5, betas=betas_true,
+        sigma=sigma_true, seed=20260809,
+    )
+
+    ours = fit_d3c_glioma_model(outcomes, labels, patient_ids, n_quadrature=31)
+    frame = pd.DataFrame({
+        "y": outcomes,
+        "model_label": labels,
+        "patient": patient_ids,
+    })
+
+    our_estimates = np.array([t.estimate for t in ours.terms])
+
+    # 2. BinomialBayesMixedGLM estimates the SAME (conditional, subject-specific)
+    #    coefficients we do, so these are directly comparable. It is a variational Bayes
+    #    fit rather than maximum likelihood, so exact agreement is not expected; the
+    #    tolerance below allows for the variational approximation and the prior.
+    bayes_fit = BinomialBayesMixedGLM.from_formula(
+        "y ~ model_label", {"patient": "0 + C(patient)"}, frame
+    ).fit_vb(verbose=False)
+
+    bayes_estimates = np.asarray(bayes_fit.fe_mean, dtype=float)
+    bayes_sigma = float(np.exp(np.asarray(bayes_fit.vcp_mean, dtype=float)[0]))
+    bayes_gap = float(np.max(np.abs(our_estimates - bayes_estimates)))
+
+    print(
+        f"        ours  {np.round(our_estimates, 4)} sigma={ours.group_sd:.4f}\n"
+        f"        VB    {np.round(bayes_estimates, 4)} sigma={bayes_sigma:.4f}"
+    )
+
+    check(
+        "fixed effects agree with statsmodels BinomialBayesMixedGLM (conditional)",
+        bayes_gap < 0.15,
+        f"largest gap {bayes_gap:.4f}",
+    )
+    check(
+        "group SD agrees with BinomialBayesMixedGLM",
+        abs(ours.group_sd - bayes_sigma) < 0.25,
+        f"ours {ours.group_sd:.4f} vs VB {bayes_sigma:.4f}",
+    )
+
+    # 3. GEE with exchangeable correlation estimates a MARGINAL (population-averaged)
+    #    coefficient, which is a different estimand from ours. Demanding equality would
+    #    be wrong: for a logistic link the marginal coefficient is attenuated towards
+    #    zero relative to the conditional one by approximately
+    #        beta_marginal = beta_conditional / sqrt(1 + c^2 * sigma^2)
+    #    with c = 16*sqrt(3)/(15*pi) (Zeger and Liang). The comparison below applies that
+    #    correction, so it tests our estimate against GEE through the relation theory
+    #    predicts, rather than against a number it was never estimating.
+    gee_fit = GEE.from_formula(
+        "y ~ model_label", groups="patient", data=frame,
+        cov_struct=Exchangeable(), family=Binomial(),
+    ).fit()
+
+    gee_estimates = np.asarray(gee_fit.params, dtype=float)
+    attenuation = math.sqrt(1.0 + ZEGER_LIANG_C_SQUARED * ours.group_sd**2)
+    predicted_marginal = our_estimates / attenuation
+    gee_gap = float(np.max(np.abs(predicted_marginal - gee_estimates)))
+
+    print(
+        f"        GEE   {np.round(gee_estimates, 4)}\n"
+        f"        ours/{attenuation:.4f} -> {np.round(predicted_marginal, 4)}"
+    )
+
+    check(
+        "GEE marginal estimates match ours after Zeger-Liang attenuation",
+        gee_gap < 0.15,
+        f"largest gap {gee_gap:.4f}",
+    )
+
+    # The attenuation is real, not a rounding difference: without correcting for it the
+    # two sets of coefficients genuinely disagree, which is why the raw comparison is
+    # not the test.
+    raw_gap = float(np.max(np.abs(our_estimates - gee_estimates)))
+    check(
+        "uncorrected GEE comparison differs materially, as theory requires",
+        raw_gap > 2.0 * gee_gap,
+        f"raw gap {raw_gap:.4f} vs corrected {gee_gap:.4f}",
+    )
+
+    check(
+        "all three implementations agree on the sign and ordering of the contrasts",
+        (our_estimates[1] < 0 and our_estimates[2] < our_estimates[1])
+        and (bayes_estimates[1] < 0 and bayes_estimates[2] < bayes_estimates[1])
+        and (gee_estimates[1] < 0 and gee_estimates[2] < gee_estimates[1]),
+    )
+
+
 def main():
     print("src/stats unit tests")
 
@@ -615,11 +790,15 @@ def main():
     test_clustered_bootstrap()
     test_mcnemar()
     test_mixed_effects()
+    test_mixed_effects_cross_validation()
 
-    print(f"\n{PASSED} passed, {len(FAILURES)} failed")
+    print(f"\n{PASSED} passed, {len(FAILURES)} failed, {len(SKIPPED)} skipped")
 
     for name, detail in FAILURES:
         print(f"  FAILED: {name}  {detail}")
+
+    for name, reason in SKIPPED:
+        print(f"  SKIPPED: {name}  {reason}")
 
     return len(FAILURES)
 
