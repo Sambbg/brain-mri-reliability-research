@@ -49,6 +49,55 @@ def get_image_orientation(ds):
     return values
 
 
+def parse_dicom_time(value):
+    """DICOM TM value (HHMMSS.FFFFFF) to seconds since midnight, or None.
+
+    Returns None rather than guessing on anything malformed, so unparsable times are
+    counted as missing coverage instead of silently becoming a timing verdict.
+    """
+    if value is None:
+        return None
+
+    text = str(value).strip()
+    if not text:
+        return None
+
+    try:
+        hours = int(text[0:2])
+        minutes = int(text[2:4]) if len(text) >= 4 else 0
+        seconds = float(text[4:]) if len(text) > 4 else 0.0
+    except ValueError:
+        return None
+
+    if not (0 <= hours <= 23 and 0 <= minutes <= 59 and 0.0 <= seconds < 61.0):
+        return None
+
+    return hours * 3600 + minutes * 60 + seconds
+
+
+SECONDS_PER_DAY = 24 * 3600
+
+
+def classify_contrast_timing(bolus_start_seconds, acquisition_seconds):
+    """Pre or post contrast from the clock, not from the series description.
+
+    A series that began after the contrast bolus started is post-contrast. Both tags are
+    times of day with no date, so a study running across midnight would otherwise show a
+    ~24h error; deltas beyond half a day are wrapped.
+    """
+    if bolus_start_seconds is None or acquisition_seconds is None:
+        return "unknown", None
+
+    delta = acquisition_seconds - bolus_start_seconds
+
+    if delta < -SECONDS_PER_DAY / 2:
+        delta += SECONDS_PER_DAY
+    elif delta > SECONDS_PER_DAY / 2:
+        delta -= SECONDS_PER_DAY
+
+    return ("post_contrast" if delta >= 0 else "pre_contrast"), delta
+
+
 PLANE_BY_AXIS = {0: "sagittal", 1: "coronal", 2: "axial"}
 
 # An axial series more than this far off the true axial plane is reported separately.
@@ -218,6 +267,8 @@ def main():
     series_orientations = defaultdict(set)
     series_first_orientation = {}
     series_contrast_agents = defaultdict(set)
+    series_bolus_start_seconds = {}
+    series_acquisition_seconds = defaultdict(list)
 
     for idx, path in enumerate(files, start=1):
         if idx % 500 == 0:
@@ -278,6 +329,14 @@ def main():
                 safe_get(ds, "ContrastBolusAgent", "").strip()
             )
 
+            bolus_start = parse_dicom_time(getattr(ds, "ContrastBolusStartTime", None))
+            if bolus_start is not None:
+                series_bolus_start_seconds.setdefault(series_uid, bolus_start)
+
+            acquisition_time = parse_dicom_time(getattr(ds, "AcquisitionTime", None))
+            if acquisition_time is not None:
+                series_acquisition_seconds[series_uid].append(acquisition_time)
+
             rows.append({
                 "filepath": str(path),
                 "patient_id": patient_id,
@@ -318,6 +377,13 @@ def main():
         agents = {a for a in series_contrast_agents.get(series_uid, set()) if a}
         manifest_row = manifest.get(series_uid, {})
 
+        bolus_start = series_bolus_start_seconds.get(series_uid)
+        acquisition_times = series_acquisition_seconds.get(series_uid, [])
+        # The start of the series is what decides pre versus post, so use the earliest
+        # acquisition time in it rather than an arbitrary slice.
+        acquisition_start = min(acquisition_times) if acquisition_times else None
+        timing_class, timing_delta = classify_contrast_timing(bolus_start, acquisition_start)
+
         series_rows.append({
             "series_instance_uid": series_uid,
             "patient_id": series_patient_ids.get(series_uid, ""),
@@ -336,6 +402,10 @@ def main():
             "orientation_consistent": len(series_orientations.get(series_uid, set())) <= 1,
             "contrast_bolus_agent": "; ".join(sorted(agents)),
             "has_contrast_bolus_agent": bool(agents),
+            "contrast_bolus_start_seconds": "" if bolus_start is None else round(bolus_start, 3),
+            "acquisition_start_seconds": "" if acquisition_start is None else round(acquisition_start, 3),
+            "contrast_timing_delta_seconds": "" if timing_delta is None else round(timing_delta, 3),
+            "contrast_timing_class": timing_class,
         })
 
     with SERIES_SUMMARY_CSV.open("w", newline="", encoding="utf-8") as f:
@@ -357,6 +427,10 @@ def main():
             "orientation_consistent",
             "contrast_bolus_agent",
             "has_contrast_bolus_agent",
+            "contrast_bolus_start_seconds",
+            "acquisition_start_seconds",
+            "contrast_timing_delta_seconds",
+            "contrast_timing_class",
         ]
         writer = csv.DictWriter(f, fieldnames=fieldnames)
         writer.writeheader()
@@ -510,6 +584,112 @@ def main():
             f.write("|---|---:|\n")
             for agent, count in agent_counts.most_common(20):
                 f.write(f"| {str(agent).replace('|', '/')} | {count} |\n")
+
+        f.write("\n### Pre versus Post Contrast from Acquisition Timing\n\n")
+        f.write(
+            "ContrastBolusAgent only records that contrast was administered during the "
+            "study; scanners routinely copy it to every series in that study, including "
+            "pre-contrast acquisitions, so it cannot discriminate pre from post at series "
+            "level. Comparing ContrastBolusStartTime (0018,1042) with the earliest "
+            "AcquisitionTime (0008,0032) in the series can: a series that began after the "
+            "bolus started is post-contrast.\n\n"
+        )
+
+        total_series = len(series_rows)
+        have_bolus = [r for r in series_rows if r["contrast_bolus_start_seconds"] != ""]
+        have_acq = [r for r in series_rows if r["acquisition_start_seconds"] != ""]
+        have_both = [r for r in series_rows if r["contrast_timing_class"] != "unknown"]
+        coverage = len(have_both) / total_series if total_series else 0.0
+
+        f.write("#### Field Coverage\n\n")
+        f.write("| Field | Series populated | Share |\n")
+        f.write("|---|---:|---:|\n")
+        f.write(
+            f"| ContrastBolusStartTime | {len(have_bolus)} | "
+            f"{len(have_bolus) / total_series if total_series else 0:.4f} |\n"
+        )
+        f.write(
+            f"| AcquisitionTime | {len(have_acq)} | "
+            f"{len(have_acq) / total_series if total_series else 0:.4f} |\n"
+        )
+        f.write(f"| Both, so timing is decidable | {len(have_both)} | {coverage:.4f} |\n\n")
+
+        if not have_both:
+            f.write(
+                f"**Timing cannot be evaluated for any series.** Neither field pair is "
+                f"populated anywhere in the {total_series} selected series, so pre versus "
+                "post contrast cannot be established from headers at all. It remains "
+                "inferred from SeriesDescription and must be reported as an assumption, "
+                "not as a verified property of the cohort.\n\n"
+            )
+        elif coverage < 0.95:
+            f.write(
+                f"**Coverage is incomplete: timing is decidable for only "
+                f"{len(have_both)} of {total_series} series ({coverage:.1%}).** The "
+                f"breakdown below therefore describes that subset alone and says nothing "
+                f"about the remaining {total_series - len(have_both)} series, whose "
+                "contrast status stays inferred from SeriesDescription. Do not read these "
+                "counts as a cohort-wide result or rescale them to the full cohort.\n\n"
+            )
+        else:
+            f.write(
+                f"Coverage is {coverage:.1%}, so the breakdown below is representative of "
+                "the cohort.\n\n"
+            )
+
+        if have_both:
+            timing_counts = Counter(r["contrast_timing_class"] for r in have_both)
+            f.write("#### Timing Verdict, Decidable Series Only\n\n")
+            f.write("| Verdict | Series | Share of decidable |\n")
+            f.write("|---|---:|---:|\n")
+            for verdict, count in sorted(timing_counts.items()):
+                f.write(f"| {verdict} | {count} | {count / len(have_both):.4f} |\n")
+
+            deltas = sorted(r["contrast_timing_delta_seconds"] for r in have_both)
+            median_delta = deltas[len(deltas) // 2]
+            f.write(
+                f"\nDelta is acquisition start minus bolus start, in seconds. "
+                f"Median {median_delta:.1f}s, minimum {deltas[0]:.1f}s, "
+                f"maximum {deltas[-1]:.1f}s.\n\n"
+            )
+
+            f.write("#### Timing Verdict against Description-Based Category\n\n")
+            f.write(
+                "Denominators are decidable series only, not all series in the category.\n\n"
+            )
+            f.write("| selection_category | Decidable | post_contrast | pre_contrast |\n")
+            f.write("|---|---:|---:|---:|\n")
+            decidable_categories = Counter(r["selection_category"] for r in have_both)
+            for category, count in sorted(decidable_categories.items()):
+                post = sum(
+                    1 for r in have_both
+                    if r["selection_category"] == category
+                    and r["contrast_timing_class"] == "post_contrast"
+                )
+                pre = sum(
+                    1 for r in have_both
+                    if r["selection_category"] == category
+                    and r["contrast_timing_class"] == "pre_contrast"
+                )
+                f.write(f"| {category or '(unknown)'} | {count} | {post} | {pre} |\n")
+
+            disagreements = [
+                r for r in have_both
+                if (r["selection_category"] == "preferred_t1_postcontrast"
+                    and r["contrast_timing_class"] == "pre_contrast")
+            ]
+            f.write(
+                f"\nSeries described as post-contrast but acquired before the bolus: "
+                f"{len(disagreements)}\n"
+            )
+            if disagreements:
+                f.write("\n| PatientID | Delta (s) | SeriesDescription |\n")
+                f.write("|---|---:|---|\n")
+                for row in disagreements[:20]:
+                    f.write(
+                        f"| {row['patient_id']} | {row['contrast_timing_delta_seconds']} | "
+                        f"{str(row['series_description']).replace('|', '/')} |\n"
+                    )
 
         f.write("\n### Header Contrast versus Description-Based Category\n\n")
         f.write(
