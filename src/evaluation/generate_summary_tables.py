@@ -20,12 +20,95 @@ MODELS = {
 }
 
 
+PROVENANCE_FILENAME = "provenance.json"
+
+
 def load_json(path: Path) -> dict:
     if not path.exists():
         raise FileNotFoundError(f"Missing required file: {path}")
 
     with path.open("r", encoding="utf-8") as f:
         return json.load(f)
+
+
+def load_run_set_provenance() -> dict:
+    """Rule 4: read each model's provenance sidecar before any table is generated."""
+    provenance = {}
+
+    for model_name, info in MODELS.items():
+        path = info["exp_dir"] / PROVENANCE_FILENAME
+
+        if not path.exists():
+            raise FileNotFoundError(
+                f"Missing {path}.\n"
+                "Tables may only be generated from a frozen run set produced by the "
+                "current training scripts, which write provenance.json. Retrain with "
+                "RUN_ID set, for example:\n"
+                "  RUN_ID=2026-08-frozen-a python src/training/train_e001_resnet18.py"
+            )
+
+        provenance[model_name] = load_json(path)
+
+    return provenance
+
+
+def assert_single_run_set(provenance: dict):
+    """Rule 4: abort unless all three models come from one frozen run set.
+
+    run_id is the run-set identity and must be identical.
+
+    split_csv_sha256 must also be identical: three models compared in one table have to
+    have been trained and tested on the same leakage-aware split, and that can never
+    legitimately differ.
+
+    git_commit is deliberately NOT asserted. Experiment artefacts are version-controlled,
+    so each model's outputs are committed before the next model trains, which means the
+    three models in a single run set legitimately carry different commits.
+    """
+
+    def collect(field):
+        return {name: prov.get(field) for name, prov in provenance.items()}
+
+    def describe(values):
+        return "\n".join(f"  {name}: {value!r}" for name, value in values.items())
+
+    run_ids = collect("run_id")
+    if None in run_ids.values() or len(set(run_ids.values())) != 1:
+        raise RuntimeError(
+            "Models do not share a single run_id, so they are not one frozen run set "
+            "and must not appear in the same table:\n" + describe(run_ids)
+        )
+
+    split_hashes = collect("split_csv_sha256")
+    if None in split_hashes.values() or len(set(split_hashes.values())) != 1:
+        raise RuntimeError(
+            "Models were not trained against an identical split_csv_sha256. Models "
+            "compared in one table must share the same split; this must never differ:\n"
+            + describe(split_hashes)
+        )
+
+    run_id = next(iter(run_ids.values()))
+    split_csv_sha256 = next(iter(split_hashes.values()))
+
+    return run_id, split_csv_sha256
+
+
+def make_table_1_run_set(provenance: dict) -> None:
+    """Record the run set the tables were generated from, including per-model commits."""
+    rows = []
+
+    for model_name, prov in provenance.items():
+        rows.append({
+            "Model": model_name,
+            "Run ID": prov.get("run_id"),
+            "Seed": prov.get("seed"),
+            "Git commit": prov.get("git_commit"),
+            "Split sha256": prov.get("split_csv_sha256"),
+            "Checkpoint sha256": prov.get("checkpoint_sha256"),
+        })
+
+    df = pd.DataFrame(rows)
+    save_table(df, "table_1_run_set_provenance")
 
 
 def round_value(value, digits=4):
@@ -308,13 +391,23 @@ def make_table_5_d3b_temperature_scaled():
 
 
 def main():
+    # Rule 4: verify the run set before generating anything, so a mixed-run set can
+    # never reach a table.
+    provenance = load_run_set_provenance()
+    run_id, split_csv_sha256 = assert_single_run_set(provenance)
+
+    print(f"Frozen run set: {run_id}")
+    print(f"Split sha256:   {split_csv_sha256}")
+    print(f"Models:         {len(provenance)}")
+
+    make_table_1_run_set(provenance)
     debug_temperature_schema()
     make_table_2_internal_performance()
     make_table_3_internal_calibration()
     make_table_4_d3b_domain_shift()
     make_table_5_d3b_temperature_scaled()
 
-    print("\nAll summary tables generated successfully.")
+    print(f"\nAll summary tables generated successfully from run set {run_id}.")
     print(f"Output directory: {OUT_DIR}")
 
 

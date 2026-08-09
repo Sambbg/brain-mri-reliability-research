@@ -12,7 +12,10 @@ reliability in brain MRI tumour classification.
    the key. Do not leave `scheduler: cosine` declared but unimplemented.
 3. Every output artefact MUST record run_id, git commit, seed, split_csv_sha256,
    and checkpoint_sha256.
-4. Table generation MUST assert all three models share a run_id, and abort otherwise.
+4. Table generation MUST assert all three models share a run_id AND an identical
+   split_csv_sha256, and abort otherwise. git_commit MUST NOT be asserted: experiment
+   artefacts are version-controlled, so each model's outputs are committed before the
+   next model trains and the three legitimately carry different commits.
 5. NEVER regenerate data/splits/D1_leakage_aware_split.csv. Its sha256 is
    944ce00e4be958f3688a0996f6fb928fc7717e7c2804abb8000f28976efe0d43.
 6. ensure_clean_git() blocks training on a dirty tree. Commit before every run.
@@ -38,22 +41,46 @@ reliability in brain MRI tumour classification.
 Ubuntu 22.04, RTX 3060 12GB, venv at ./venv, PyTorch 2.11.0+cu130.
 Run everything from repo root with venv activated.
 
-## Current violations of the hard rules
+## Rule implementation status
 
-The rules above describe the required state. As of this writing the repo does not
-meet rules 1-4; treat these as the outstanding remediation list, not as precedent
-to copy.
+Where each rule is enforced, and what is still outstanding. Keep this current — a
+stale status list is exactly the kind of misleading artefact these rules exist to
+prevent.
 
-- Rule 1: all three trainers set `cudnn.deterministic = False` and
-  `cudnn.benchmark = True` (`src/training/train_e00*.py:105-106`). No
-  `use_deterministic_algorithms`, no `worker_init_fn`, no seeded `Generator`.
-- Rule 2: `scheduler: cosine` is declared in `configs/E002_*.yaml` (twice: under
-  `training:` and as a top-level `scheduler:` block) and `configs/E003_*.yaml`,
-  but no training script constructs a scheduler.
-- Rule 3: `metadata.json` records git commit, device, torch/CUDA versions only.
-  No run_id, split_csv_sha256, or checkpoint_sha256 anywhere in the repo.
-- Rule 4: `src/evaluation/generate_summary_tables.py` has no run_id assertion.
-- Rule 5 verified holding: the split file on disk matches the recorded sha256.
+- **Rule 1 — enforced** in the three trainers: `set_seed()` sets
+  `deterministic=True` / `benchmark=False` / `use_deterministic_algorithms(True)`,
+  `seed_worker` and a seeded `Generator` are passed to every DataLoader, and
+  `CUBLAS_WORKSPACE_CONFIG` is set at import time because it must precede CUDA init.
+  Verified on torch 2.11.0+cu130: all three architectures give bitwise-identical
+  gradients across repeated passes.
+- **Rule 2 — enforced** in the trainers by `validate_config()`, which asserts
+  `dataset_id`, `classes`, `architecture`, `optimizer` and
+  `early_stopping.monitor`/`mode` against what the code implements. *Outstanding:*
+  `configs/E001_*.yaml` still declares `dataset.image_column`, `label_column`,
+  `split_column`, `training.loss`, the whole `evaluation:` block and five
+  `outputs.save_*` flags that no code reads.
+- **Rule 3 — enforced** in the trainers: a `provenance` block on `metadata.json`,
+  `final_results.json` and `best_model.pt`, an authoritative `provenance.json`
+  sidecar, and a `run_id` column on every CSV. `RUN_ID` is required from the
+  environment. *Outstanding:* the calibration, D3B/D3C evaluation and temperature
+  scaling scripts still write unstamped artefacts.
+- **Rule 4 — enforced** in `src/evaluation/generate_summary_tables.py`:
+  `assert_single_run_set()` runs before any table is written and aborts unless the
+  three `provenance.json` files share a `run_id` and a `split_csv_sha256`.
+  `table_1_run_set_provenance` records the run set, including the per-model commits.
+  *Outstanding:* `generate_summary_figures.py` and `generate_d3c_summary.py`
+  aggregate across the three models without asserting.
+- **Rule 5 — enforced at runtime** by `verify_split()` in each trainer, which aborts
+  unless the split hashes to the value recorded in rule 5.
+- **Rule 6 — note the interaction with version-controlled artefacts.** Because
+  `experiments/` is now tracked (only `experiments/**/*.pt` is ignored), the first
+  trainer's outputs dirty the tree and `ensure_clean_git()` will block the second.
+  Commit each model's artefacts before training the next. This is why `run_id` and
+  not the git commit identifies a run set.
+
+The D3C cohort is likewise pinned: `select_d3c_upenn_gbm_series.py` is deterministic
+and records the manifest sha256 in its report. The download, inspection and
+conversion steps read that manifest and abort on any series it does not list.
 
 ## Repository conventions
 
