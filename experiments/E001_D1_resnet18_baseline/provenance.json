@@ -1,0 +1,8 @@
+{
+  "run_id": "2026-08-frozen-a",
+  "git_commit": "5ee1e28a94e0eec51dc1b66135813ea1801252c6",
+  "seed": 42,
+  "split_csv": "data/splits/D1_leakage_aware_split.csv",
+  "split_csv_sha256": "944ce00e4be958f3688a0996f6fb928fc7717e7c2804abb8000f28976efe0d43",
+  "checkpoint_sha256": "2c90f830cc696bc8d95344c794a3ee8455141ce8369550fd3bdc0b557d39efba"
+}
