@@ -1,0 +1,56 @@
+{
+  "provenance": {
+    "run_id": "2026-08-sweep-a",
+    "git_commit": "3a0406b536e7390b1b5209fd6be35062878da1ad",
+    "seed": 43,
+    "seed_source": "cli",
+    "split_csv": "data/splits/D1_leakage_aware_split.csv",
+    "split_csv_sha256": "944ce00e4be958f3688a0996f6fb928fc7717e7c2804abb8000f28976efe0d43",
+    "checkpoint_sha256": "2c74ecb2c490cc4447a01c97b85bda8ebc9266fb79d5834071ea0e0d556408ed"
+  },
+  "best_epoch": 7,
+  "best_val_macro_f1": 0.9667461534514162,
+  "test_loss": 0.10734113477096033,
+  "test_accuracy": 0.9676498572787822,
+  "test_balanced_accuracy": 0.9673599188297434,
+  "test_macro_f1": 0.967658618333501,
+  "classification_report": {
+    "glioma": {
+      "precision": 0.9737827715355806,
+      "recall": 0.966542750929368,
+      "f1-score": 0.9701492537313433,
+      "support": 269.0
+    },
+    "meningioma": {
+      "precision": 0.9316546762589928,
+      "recall": 0.9700374531835206,
+      "f1-score": 0.9504587155963303,
+      "support": 267.0
+    },
+    "notumor": {
+      "precision": 0.9753086419753086,
+      "recall": 0.9442231075697212,
+      "f1-score": 0.9595141700404858,
+      "support": 251.0
+    },
+    "pituitary": {
+      "precision": 0.9923954372623575,
+      "recall": 0.9886363636363636,
+      "f1-score": 0.9905123339658444,
+      "support": 264.0
+    },
+    "accuracy": 0.9676498572787822,
+    "macro avg": {
+      "precision": 0.9682853817580599,
+      "recall": 0.9673599188297434,
+      "f1-score": 0.967658618333501,
+      "support": 1051.0
+    },
+    "weighted avg": {
+      "precision": 0.9681201034036985,
+      "recall": 0.9676498572787822,
+      "f1-score": 0.967722111479635,
+      "support": 1051.0
+    }
+  }
+}

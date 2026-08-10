@@ -1,0 +1,63 @@
+experiment:
+  id: E001
+  name: D1_internal_leakage_aware_resnet18_baseline
+  description: 'First internal baseline experiment using the D1 leakage-aware split.
+    This experiment validates the training pipeline and provides a reproducible baseline.
+    It is not used as evidence of external clinical generalisation.
+
+    '
+dataset:
+  dataset_id: D1_nickparvar_kaggle
+  split_csv: data/splits/D1_leakage_aware_split.csv
+  image_column: filepath
+  label_column: class_label
+  split_column: assigned_split
+  classes:
+  - glioma
+  - meningioma
+  - notumor
+  - pituitary
+data_loading:
+  image_size: 224
+  input_channels: 3
+  grayscale_to_rgb: true
+  batch_size: 32
+  num_workers: 4
+  pin_memory: true
+model:
+  architecture: resnet18
+  pretrained: true
+  num_classes: 4
+training:
+  seed: 43
+  epochs: 20
+  optimizer: AdamW
+  learning_rate: 0.0001
+  weight_decay: 0.0001
+  loss: cross_entropy
+  early_stopping:
+    enabled: true
+    patience: 5
+    monitor: val_macro_f1
+    mode: max
+evaluation:
+  metrics:
+  - accuracy
+  - balanced_accuracy
+  - macro_f1
+  - precision_per_class
+  - recall_per_class
+  - confusion_matrix
+  calibration_metrics:
+    enabled: false
+outputs:
+  output_dir: experiments/E001_D1_resnet18_baseline
+  save_checkpoint: true
+  save_predictions: true
+  save_metrics_csv: true
+  save_confusion_matrix: true
+  save_git_commit_hash: true
+notes:
+- Do not use the original Kaggle Training/Testing folders for this experiment.
+- Use only the leakage-aware split.
+- This is an internal benchmark, not external validation.
