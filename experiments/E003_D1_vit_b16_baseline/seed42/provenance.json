@@ -1,8 +1,9 @@
 {
-  "run_id": "2026-08-frozen-a",
-  "git_commit": "afbd3f2fe66d0294dd52639345f539ad963258d4",
+  "run_id": "2026-08-sweep-a",
+  "git_commit": "3e67c73c37110f1e4fe3aeb060d0051f3f96d73b",
   "seed": 42,
+  "seed_source": "cli",
   "split_csv": "data/splits/D1_leakage_aware_split.csv",
   "split_csv_sha256": "944ce00e4be958f3688a0996f6fb928fc7717e7c2804abb8000f28976efe0d43",
-  "checkpoint_sha256": "a492918248fd82658754eeadfbc1ca7530ed2ab06eb0494362533362ab89ce88"
+  "checkpoint_sha256": "bca986aeabad5a35d5a57a18879fe7e9dba1844889d865dff42282f35fd24254"
 }
