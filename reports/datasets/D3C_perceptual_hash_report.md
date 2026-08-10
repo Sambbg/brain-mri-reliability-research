@@ -2,9 +2,9 @@
 
 ## Input and Output
 
-- Input manifest: `data\processed\D3C_selected_slices_manifest.csv`
-- Output manifest: `data\processed\D3C_selected_slices_manifest_phash.csv`
-- Total rows processed: 2845
+- Input manifest: `data/processed/D3C_selected_slices_manifest.csv`
+- Output manifest: `data/processed/D3C_selected_slices_manifest_phash.csv`
+- Total rows processed: 3070
 - Errors: 0
 
 ## Hash Methods
@@ -16,9 +16,9 @@
 
 ## Summary
 
-- Unique pHash values: 2375
-- Unique aHash values: 873
-- Unique dHash values: 2564
+- Unique pHash values: 2563
+- Unique aHash values: 948
+- Unique dHash values: 2779
 - Hashing errors: 0
 
 ## Interpretation

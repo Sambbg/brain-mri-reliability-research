@@ -2,16 +2,16 @@
 
 ## Input
 
-- D1 manifest: `data\processed\D1_manifest_deduplicated.csv`
-- D3C manifest: `data\processed\D3C_selected_slices_manifest_phash.csv`
+- D1 manifest: `data/processed/D1_manifest_deduplicated.csv`
+- D3C manifest: `data/processed/D3C_selected_slices_manifest_phash.csv`
 - D1 rows: 7013
-- D3C rows: 2845
+- D3C rows: 3070
 
 ## Summary
 
 - Shared SHA256 hashes: 0
 - Exact overlap pairs: 0
-- Output CSV: `reports\datasets\D1_D3C_exact_overlap_pairs.csv`
+- Output CSV: `reports/datasets/D1_D3C_exact_overlap_pairs.csv`
 
 ## Interpretation
 
