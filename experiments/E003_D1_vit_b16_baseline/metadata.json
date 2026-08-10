@@ -1,0 +1,21 @@
+{
+  "experiment_id": "E003",
+  "experiment_name": "D1_internal_leakage_aware_vit_b16_baseline",
+  "started_at": "2026-08-10T23:03:11.538954",
+  "git_commit_hash": "afbd3f2fe66d0294dd52639345f539ad963258d4",
+  "config_path": "configs/E003_D1_vit_b16_baseline.yaml",
+  "device": "cuda",
+  "torch_version": "2.11.0+cu130",
+  "cuda_available": true,
+  "cuda_version": "13.0",
+  "gpu_name": "NVIDIA GeForce RTX 3060",
+  "provenance": {
+    "run_id": "2026-08-frozen-a",
+    "git_commit": "afbd3f2fe66d0294dd52639345f539ad963258d4",
+    "seed": 42,
+    "split_csv": "data/splits/D1_leakage_aware_split.csv",
+    "split_csv_sha256": "944ce00e4be958f3688a0996f6fb928fc7717e7c2804abb8000f28976efe0d43",
+    "checkpoint_sha256": "a492918248fd82658754eeadfbc1ca7530ed2ab06eb0494362533362ab89ce88"
+  },
+  "finished_at": "2026-08-10T23:37:11.846252"
+}
