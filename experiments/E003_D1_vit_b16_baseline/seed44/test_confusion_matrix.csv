@@ -1,0 +1,5 @@
+,run_id,pred_glioma,pred_meningioma,pred_notumor,pred_pituitary
+true_glioma,2026-08-sweep-a,255,5,8,1
+true_meningioma,2026-08-sweep-a,5,255,2,5
+true_notumor,2026-08-sweep-a,2,7,235,7
+true_pituitary,2026-08-sweep-a,0,1,0,263
