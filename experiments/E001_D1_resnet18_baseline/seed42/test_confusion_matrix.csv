@@ -1,5 +1,5 @@
 ,run_id,pred_glioma,pred_meningioma,pred_notumor,pred_pituitary
-true_glioma,2026-08-frozen-a,256,5,8,0
-true_meningioma,2026-08-frozen-a,13,253,1,0
-true_notumor,2026-08-frozen-a,0,13,237,1
-true_pituitary,2026-08-frozen-a,1,6,0,257
+true_glioma,2026-08-sweep-a,256,5,8,0
+true_meningioma,2026-08-sweep-a,13,253,1,0
+true_notumor,2026-08-sweep-a,0,13,237,1
+true_pituitary,2026-08-sweep-a,1,6,0,257

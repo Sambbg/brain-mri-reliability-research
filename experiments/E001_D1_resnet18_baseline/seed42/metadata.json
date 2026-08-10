@@ -1,8 +1,8 @@
 {
   "experiment_id": "E001",
   "experiment_name": "D1_internal_leakage_aware_resnet18_baseline",
-  "started_at": "2026-08-10T22:59:15.871989",
-  "git_commit_hash": "21116eb5d16d5cdbadc24604e5e086a8f766f981",
+  "started_at": "2026-08-11T00:27:49.812767",
+  "git_commit_hash": "4ec3a01d51ff17118f5e2a6aae12d5fe73ad6f69",
   "config_path": "configs/E001_D1_resnet18_baseline.yaml",
   "device": "cuda",
   "torch_version": "2.11.0+cu130",
@@ -10,12 +10,13 @@
   "cuda_version": "13.0",
   "gpu_name": "NVIDIA GeForce RTX 3060",
   "provenance": {
-    "run_id": "2026-08-frozen-a",
-    "git_commit": "21116eb5d16d5cdbadc24604e5e086a8f766f981",
+    "run_id": "2026-08-sweep-a",
+    "git_commit": "4ec3a01d51ff17118f5e2a6aae12d5fe73ad6f69",
     "seed": 42,
+    "seed_source": "cli",
     "split_csv": "data/splits/D1_leakage_aware_split.csv",
     "split_csv_sha256": "944ce00e4be958f3688a0996f6fb928fc7717e7c2804abb8000f28976efe0d43",
-    "checkpoint_sha256": "35e47eb8840e00bedfdda5ebe4834b59c9e500720ba6398f1265a8604f19afb6"
+    "checkpoint_sha256": "3451f1c66cdff9c212f0e49be6c0f2fef0bd9607dc923a2751137eb37dfda90e"
   },
-  "finished_at": "2026-08-10T23:01:47.891865"
+  "finished_at": "2026-08-11T00:30:18.174449"
 }
