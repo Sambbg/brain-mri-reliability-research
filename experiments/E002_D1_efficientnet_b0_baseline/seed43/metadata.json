@@ -1,0 +1,22 @@
+{
+  "experiment_id": "E002",
+  "experiment_name": "D1_internal_leakage_aware_efficientnet_b0_baseline",
+  "started_at": "2026-08-11T01:13:00.900944",
+  "git_commit_hash": "52d2ee49ec84dd6846285a51454fea67906fde38",
+  "config_path": "configs/E002_D1_efficientnet_b0_baseline.yaml",
+  "device": "cuda",
+  "torch_version": "2.11.0+cu130",
+  "cuda_available": true,
+  "cuda_version": "13.0",
+  "gpu_name": "NVIDIA GeForce RTX 3060",
+  "provenance": {
+    "run_id": "2026-08-sweep-a",
+    "git_commit": "52d2ee49ec84dd6846285a51454fea67906fde38",
+    "seed": 43,
+    "seed_source": "cli",
+    "split_csv": "data/splits/D1_leakage_aware_split.csv",
+    "split_csv_sha256": "944ce00e4be958f3688a0996f6fb928fc7717e7c2804abb8000f28976efe0d43",
+    "checkpoint_sha256": "62906d51c9cdffa28ebc2a7f0d08036f05462207970189010ebd5d7cdb0a24ef"
+  },
+  "finished_at": "2026-08-11T01:18:42.325153"
+}

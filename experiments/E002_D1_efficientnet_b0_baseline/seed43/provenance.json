@@ -1,0 +1,9 @@
+{
+  "run_id": "2026-08-sweep-a",
+  "git_commit": "52d2ee49ec84dd6846285a51454fea67906fde38",
+  "seed": 43,
+  "seed_source": "cli",
+  "split_csv": "data/splits/D1_leakage_aware_split.csv",
+  "split_csv_sha256": "944ce00e4be958f3688a0996f6fb928fc7717e7c2804abb8000f28976efe0d43",
+  "checkpoint_sha256": "62906d51c9cdffa28ebc2a7f0d08036f05462207970189010ebd5d7cdb0a24ef"
+}
