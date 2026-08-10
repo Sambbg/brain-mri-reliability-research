@@ -1,6 +1,12 @@
 venv/
 __pycache__/
 *.pyc
+
+# Claude Code machine-local tool state (personal permission allowlist). Not project
+# content. It must be ignored rather than left untracked: ensure_clean_git() gates every
+# training run, so an untracked file here blocks the whole seed sweep. A shared
+# .claude/settings.json can still be committed if one is ever wanted.
+.claude/settings.local.json
 .ipynb_checkpoints/
 .env
 .DS_Store
