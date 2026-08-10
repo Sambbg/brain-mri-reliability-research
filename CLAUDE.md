@@ -12,8 +12,10 @@ reliability in brain MRI tumour classification.
    the key. Do not leave `scheduler: cosine` declared but unimplemented.
 3. Every output artefact MUST record run_id, git commit, seed, split_csv_sha256,
    and checkpoint_sha256.
-4. Table generation MUST assert all three models share a run_id AND an identical
-   split_csv_sha256, and abort otherwise. git_commit MUST NOT be asserted: experiment
+4. Table generation MUST assert all three models share a run_id, a seed AND an
+   identical split_csv_sha256, and abort otherwise. seed is required because a sweep
+   runs every architecture at several seeds under one run_id, so run_id alone no longer
+   identifies a comparable set. git_commit MUST NOT be asserted: experiment
    artefacts are version-controlled, so each model's outputs are committed before the
    next model trains and the three legitimately carry different commits.
 5. NEVER regenerate data/splits/D1_leakage_aware_split.csv. Its sha256 is
@@ -45,7 +47,9 @@ reliability in brain MRI tumour classification.
 - No statistical inference exists in the repo yet. src/stats/ is to be built:
   Wilson intervals, patient-clustered bootstrap, McNemar with Holm, mixed-effects
   logistic regression.
-- Single seed (42) only. 5 seeds x 3 architectures required.
+- Seed sweep: seeds 42-46 x 3 architectures, driven by `scripts/run_seed_sweep.py`,
+  which commits between runs so `ensure_clean_git()` passes and skips (seed,
+  architecture) pairs already recorded under the current RUN_ID, so it is resumable.
 
 ## Environment
 
@@ -77,7 +81,8 @@ prevent.
   scaling scripts still write unstamped artefacts.
 - **Rule 4 — enforced** in `src/evaluation/generate_summary_tables.py`:
   `assert_single_run_set()` runs before any table is written and aborts unless the
-  three `provenance.json` files share a `run_id` and a `split_csv_sha256`.
+  three `provenance.json` files share a `run_id`, a `seed` and a `split_csv_sha256`.
+  Set `SEED` to generate tables for a seed other than 42.
   `table_1_run_set_provenance` records the run set, including the per-model commits.
   *Outstanding:* `generate_summary_figures.py` and `generate_d3c_summary.py`
   aggregate across the three models without asserting.
@@ -100,11 +105,15 @@ conversion steps read that manifest and abort on any series it does not list.
   `D3C` (UPENN-GBM, human glioma, primary domain-shift set).
 - **Experiments:** `E001` ResNet18, `E002` EfficientNet-B0, `E003` ViT-B/16, all
   trained on the D1 leakage-aware split. Config `configs/E00X_D1_<arch>_baseline.yaml`,
-  outputs `experiments/E00X_D1_<arch>_baseline/`, reports `reports/experiments/E00X_*.md`.
+  outputs `experiments/E00X_D1_<arch>_baseline/seed<N>/`, reports
+  `reports/experiments/E00X_*.md`.
   File names encode the pair being acted on (`check_d1_d3c_near_overlap.py`,
   `evaluate_e002_d3c_temperature_scaled.py`).
-- Scripts are standalone, argument-free entry points run from the repo root; inputs
-  and outputs are module-level constants at the top of the file. `src/` is not an
+- Scripts are standalone entry points run from the repo root; inputs and outputs are
+  module-level constants at the top of the file. The three trainers are the one
+  exception: they accept `--seed N`, which overrides `training.seed` and selects the
+  seed-scoped output directory. Downstream scripts read `SEED` from the environment
+  (default 42) to locate that directory. `src/` is not an
   importable package. Per-model variants are duplicated rather than parameterised,
   so a behavioural change usually means editing all three files identically.
 - Every analysis script emits both a machine-readable artefact (JSON/CSV under

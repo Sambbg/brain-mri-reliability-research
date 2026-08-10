@@ -12,13 +12,18 @@ from torch.utils.data import Dataset, DataLoader
 from torchvision import transforms, models
 from PIL import Image
 from sklearn.metrics import accuracy_score, f1_score, balanced_accuracy_score, log_loss
+import os
+
+# Seed-scoped experiment directory. Training writes to <exp_dir>/seed<N>/, so a
+# sweep does not overwrite itself. Set SEED to read a seed other than 42.
+SEED_SUBDIR = "seed" + os.environ.get("SEED", "42")
 
 
 CONFIG_PATH = Path("configs/E003_D1_vit_b16_baseline.yaml")
 SPLIT_CSV = Path("data/splits/D1_leakage_aware_split.csv")
-CHECKPOINT_PATH = Path("experiments/E003_D1_vit_b16_baseline/best_model.pt")
+CHECKPOINT_PATH = Path(f"experiments/E003_D1_vit_b16_baseline/{SEED_SUBDIR}/best_model.pt")
 
-OUT_DIR = Path("experiments/E003_D1_vit_b16_baseline")
+OUT_DIR = Path(f"experiments/E003_D1_vit_b16_baseline/{SEED_SUBDIR}")
 REPORT_PATH = Path("reports/experiments/E003_D1_temperature_scaling_results.md")
 
 IMAGE_SIZE = 224

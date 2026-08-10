@@ -1,10 +1,10 @@
 from pathlib import Path
+import argparse
 import csv
 import hashlib
 import json
 import os
 import random
-import shutil
 import subprocess
 from datetime import datetime
 from collections import Counter
@@ -375,17 +375,41 @@ def save_confusion_matrix(output_path, labels, preds, run_id):
     df.to_csv(output_path)
 
 
+def parse_args():
+    parser = argparse.ArgumentParser(
+        description=(
+            "Train this baseline. --seed overrides the config seed so a sweep can run "
+            "the same configuration at several seeds without editing the config."
+        )
+    )
+    parser.add_argument(
+        "--seed",
+        type=int,
+        default=None,
+        help="Random seed. Defaults to training.seed in the config.",
+    )
+    return parser.parse_args()
+
+
 def main():
+    args = parse_args()
+
     ensure_clean_git()
     run_id = get_run_id()
 
     config = load_config(CONFIG_PATH)
     validate_config(config)
 
-    seed = int(config["training"]["seed"])
+    seed = int(config["training"]["seed"]) if args.seed is None else int(args.seed)
     set_seed(seed)
 
-    output_dir = Path(config["outputs"]["output_dir"])
+    # Rule 2: the archived config must describe the run, not the default. The effective
+    # seed is substituted before config_used.yaml is written and before the config is
+    # embedded in the checkpoint.
+    config["training"]["seed"] = seed
+
+    # Seed-scoped output so runs in a sweep cannot overwrite one another.
+    output_dir = Path(config["outputs"]["output_dir"]) / f"seed{seed}"
     output_dir.mkdir(parents=True, exist_ok=True)
 
     git_hash = get_git_commit_hash()
@@ -401,13 +425,16 @@ def main():
         "run_id": run_id,
         "git_commit": git_hash,
         "seed": seed,
+        "seed_source": "cli" if args.seed is not None else "config",
         "split_csv": str(split_csv),
         "split_csv_sha256": split_csv_sha256,
         "checkpoint_sha256": None,
     }
 
-    # Save config copy and metadata before training.
-    shutil.copy2(CONFIG_PATH, output_dir / "config_used.yaml")
+    # Save config copy and metadata before training. Rendered rather than copied, so
+    # the archived config carries the seed that actually ran.
+    with (output_dir / "config_used.yaml").open("w", encoding="utf-8") as f:
+        yaml.safe_dump(config, f, sort_keys=False, default_flow_style=False)
 
     metadata = {
         "experiment_id": config["experiment"]["id"],

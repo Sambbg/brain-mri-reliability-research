@@ -162,7 +162,9 @@ not included. To be confirmed by the full inspection run.
 
 - `src/stats/` remains unbuilt: Wilson intervals, patient-clustered bootstrap, McNemar
   with Holm, mixed-effects logistic regression.
-- Single seed (42) only; the 5-seed × 3-architecture sweep has not begun.
+- Seed sweep wired up: seeds 42–46 × 3 architectures via `scripts/run_seed_sweep.py`,
+  under `RUN_ID=2026-08-sweep-a`. Trainers take `--seed` and write to
+  `experiments/<exp>/seed<N>/`; downstream scripts resolve that directory from `SEED`.
 - ~~The D3C skull-stripping confound still needs a skull-stripping control on the D1
   test split.~~ **Withdrawn.** D3C is not skull-stripped, so no such control is
   required. See the retraction below.

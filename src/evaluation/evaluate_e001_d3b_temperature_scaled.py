@@ -4,12 +4,17 @@ from collections import Counter
 
 import numpy as np
 import pandas as pd
+import os
 
-PREDICTIONS_CSV = Path("experiments/E001_D1_resnet18_baseline/d3b_predictions.csv")
-TEMP_METRICS_JSON = Path("experiments/E001_D1_resnet18_baseline/temperature_scaling_metrics.json")
+# Seed-scoped experiment directory. Training writes to <exp_dir>/seed<N>/, so a
+# sweep does not overwrite itself. Set SEED to read a seed other than 42.
+SEED_SUBDIR = "seed" + os.environ.get("SEED", "42")
 
-OUT_PREDICTIONS_CSV = Path("experiments/E001_D1_resnet18_baseline/d3b_temperature_scaled_predictions.csv")
-OUT_METRICS_JSON = Path("experiments/E001_D1_resnet18_baseline/d3b_temperature_scaled_metrics.json")
+PREDICTIONS_CSV = Path(f"experiments/E001_D1_resnet18_baseline/{SEED_SUBDIR}/d3b_predictions.csv")
+TEMP_METRICS_JSON = Path(f"experiments/E001_D1_resnet18_baseline/{SEED_SUBDIR}/temperature_scaling_metrics.json")
+
+OUT_PREDICTIONS_CSV = Path(f"experiments/E001_D1_resnet18_baseline/{SEED_SUBDIR}/d3b_temperature_scaled_predictions.csv")
+OUT_METRICS_JSON = Path(f"experiments/E001_D1_resnet18_baseline/{SEED_SUBDIR}/d3b_temperature_scaled_metrics.json")
 REPORT_PATH = Path("reports/experiments/E001_D3B_temperature_scaled_results.md")
 
 CLASS_NAMES = ["glioma", "meningioma", "notumor", "pituitary"]

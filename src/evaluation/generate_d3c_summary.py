@@ -8,6 +8,11 @@ from pathlib import Path
 import json
 import pandas as pd
 import matplotlib.pyplot as plt
+import os
+
+# Seed-scoped experiment directory. Training writes to <exp_dir>/seed<N>/, so a
+# sweep does not overwrite itself. Set SEED to read a seed other than 42.
+SEED_SUBDIR = "seed" + os.environ.get("SEED", "42")
 
 TABLE_DIR = Path("reports/experiments/tables")
 FIG_DIR = Path("reports/experiments/figures")
@@ -15,9 +20,9 @@ TABLE_DIR.mkdir(parents=True, exist_ok=True)
 FIG_DIR.mkdir(parents=True, exist_ok=True)
 
 MODELS = {
-    "E001 ResNet18": Path("experiments/E001_D1_resnet18_baseline"),
-    "E002 EfficientNet-B0": Path("experiments/E002_D1_efficientnet_b0_baseline"),
-    "E003 ViT-B/16": Path("experiments/E003_D1_vit_b16_baseline"),
+    "E001 ResNet18": Path(f"experiments/E001_D1_resnet18_baseline/{SEED_SUBDIR}"),
+    "E002 EfficientNet-B0": Path(f"experiments/E002_D1_efficientnet_b0_baseline/{SEED_SUBDIR}"),
+    "E003 ViT-B/16": Path(f"experiments/E003_D1_vit_b16_baseline/{SEED_SUBDIR}"),
 }
 SHORT = {"E001 ResNet18": "ResNet18", "E002 EfficientNet-B0": "EfficientNet-B0", "E003 ViT-B/16": "ViT-B/16"}
 CLASSES = ["glioma", "meningioma", "notumor", "pituitary"]

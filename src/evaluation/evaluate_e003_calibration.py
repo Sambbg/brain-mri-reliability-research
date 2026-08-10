@@ -3,9 +3,14 @@ import json
 import numpy as np
 import pandas as pd
 from sklearn.metrics import log_loss
+import os
 
-PRED_PATH = Path("experiments/E003_D1_vit_b16_baseline/test_predictions.csv")
-OUT_DIR = Path("experiments/E003_D1_vit_b16_baseline")
+# Seed-scoped experiment directory. Training writes to <exp_dir>/seed<N>/, so a
+# sweep does not overwrite itself. Set SEED to read a seed other than 42.
+SEED_SUBDIR = "seed" + os.environ.get("SEED", "42")
+
+PRED_PATH = Path(f"experiments/E003_D1_vit_b16_baseline/{SEED_SUBDIR}/test_predictions.csv")
+OUT_DIR = Path(f"experiments/E003_D1_vit_b16_baseline/{SEED_SUBDIR}")
 REPORT_PATH = Path("reports/experiments/E003_D1_calibration_results.md")
 
 CLASS_NAMES = ["glioma", "meningioma", "notumor", "pituitary"]

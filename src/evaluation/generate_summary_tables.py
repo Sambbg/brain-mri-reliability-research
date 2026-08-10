@@ -1,6 +1,11 @@
 from pathlib import Path
 import json
 import pandas as pd
+import os
+
+# Seed-scoped experiment directory. Training writes to <exp_dir>/seed<N>/, so a
+# sweep does not overwrite itself. Set SEED to read a seed other than 42.
+SEED_SUBDIR = "seed" + os.environ.get("SEED", "42")
 
 
 OUT_DIR = Path("reports/experiments/tables")
@@ -9,13 +14,13 @@ OUT_DIR.mkdir(parents=True, exist_ok=True)
 
 MODELS = {
     "E001 ResNet18": {
-        "exp_dir": Path("experiments/E001_D1_resnet18_baseline"),
+        "exp_dir": Path(f"experiments/E001_D1_resnet18_baseline/{SEED_SUBDIR}"),
     },
     "E002 EfficientNet-B0": {
-        "exp_dir": Path("experiments/E002_D1_efficientnet_b0_baseline"),
+        "exp_dir": Path(f"experiments/E002_D1_efficientnet_b0_baseline/{SEED_SUBDIR}"),
     },
     "E003 ViT-B/16": {
-        "exp_dir": Path("experiments/E003_D1_vit_b16_baseline"),
+        "exp_dir": Path(f"experiments/E003_D1_vit_b16_baseline/{SEED_SUBDIR}"),
     },
 }
 
@@ -57,6 +62,12 @@ def assert_single_run_set(provenance: dict):
 
     run_id is the run-set identity and must be identical.
 
+    seed must be identical. A seed sweep runs every architecture at several seeds under
+    one run_id, so run_id alone no longer identifies a comparable set: without this
+    check a table could pair seed 42's E001 with seed 44's E002 and pass. Keying a
+    consistency check on a subset of the identifying fields is the defect class that let
+    Run A and Run B blur together in the first place.
+
     split_csv_sha256 must also be identical: three models compared in one table have to
     have been trained and tested on the same leakage-aware split, and that can never
     legitimately differ.
@@ -79,6 +90,14 @@ def assert_single_run_set(provenance: dict):
             "and must not appear in the same table:\n" + describe(run_ids)
         )
 
+    seeds = collect("seed")
+    if None in seeds.values() or len(set(seeds.values())) != 1:
+        raise RuntimeError(
+            "Models were not trained at the same seed, so they are not a comparable "
+            "set and must not appear in the same table. Under a seed sweep every seed "
+            "shares one run_id, so run_id alone cannot catch this:\n" + describe(seeds)
+        )
+
     split_hashes = collect("split_csv_sha256")
     if None in split_hashes.values() or len(set(split_hashes.values())) != 1:
         raise RuntimeError(
@@ -88,9 +107,10 @@ def assert_single_run_set(provenance: dict):
         )
 
     run_id = next(iter(run_ids.values()))
+    seed = next(iter(seeds.values()))
     split_csv_sha256 = next(iter(split_hashes.values()))
 
-    return run_id, split_csv_sha256
+    return run_id, seed, split_csv_sha256
 
 
 def make_table_1_run_set(provenance: dict) -> None:
@@ -394,9 +414,10 @@ def main():
     # Rule 4: verify the run set before generating anything, so a mixed-run set can
     # never reach a table.
     provenance = load_run_set_provenance()
-    run_id, split_csv_sha256 = assert_single_run_set(provenance)
+    run_id, seed, split_csv_sha256 = assert_single_run_set(provenance)
 
     print(f"Frozen run set: {run_id}")
+    print(f"Seed:           {seed}")
     print(f"Split sha256:   {split_csv_sha256}")
     print(f"Models:         {len(provenance)}")
 

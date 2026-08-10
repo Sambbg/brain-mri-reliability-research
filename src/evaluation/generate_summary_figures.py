@@ -1,6 +1,11 @@
 from pathlib import Path
 import pandas as pd
 import matplotlib.pyplot as plt
+import os
+
+# Seed-scoped experiment directory. Training writes to <exp_dir>/seed<N>/, so a
+# sweep does not overwrite itself. Set SEED to read a seed other than 42.
+SEED_SUBDIR = "seed" + os.environ.get("SEED", "42")
 
 
 TABLE_DIR = Path("reports/experiments/tables")
@@ -112,9 +117,9 @@ def figure_4_d3b_glioma_prediction_rate():
 
 def figure_5_d3b_prediction_distribution():
     model_dirs = {
-        "ResNet18": Path("experiments/E001_D1_resnet18_baseline/d3b_domain_shift_metrics.json"),
-        "EfficientNet-B0": Path("experiments/E002_D1_efficientnet_b0_baseline/d3b_domain_shift_metrics.json"),
-        "ViT-B/16": Path("experiments/E003_D1_vit_b16_baseline/d3b_domain_shift_metrics.json"),
+        "ResNet18": Path(f"experiments/E001_D1_resnet18_baseline/{SEED_SUBDIR}/d3b_domain_shift_metrics.json"),
+        "EfficientNet-B0": Path(f"experiments/E002_D1_efficientnet_b0_baseline/{SEED_SUBDIR}/d3b_domain_shift_metrics.json"),
+        "ViT-B/16": Path(f"experiments/E003_D1_vit_b16_baseline/{SEED_SUBDIR}/d3b_domain_shift_metrics.json"),
     }
 
     import json

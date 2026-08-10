@@ -11,9 +11,14 @@ import torch
 import torch.nn as nn
 from torch.utils.data import Dataset, DataLoader
 from torchvision import models, transforms
+import os
+
+# Seed-scoped experiment directory. Training writes to <exp_dir>/seed<N>/, so a
+# sweep does not overwrite itself. Set SEED to read a seed other than 42.
+SEED_SUBDIR = "seed" + os.environ.get("SEED", "42")
 
 
-EXPERIMENT_DIR = Path("experiments/E003_D1_vit_b16_baseline")
+EXPERIMENT_DIR = Path(f"experiments/E003_D1_vit_b16_baseline/{SEED_SUBDIR}")
 CHECKPOINT_PATH = EXPERIMENT_DIR / "best_model.pt"
 
 D3B_MANIFEST = Path("data/processed/D3B_selected_slices_manifest_phash.csv")
