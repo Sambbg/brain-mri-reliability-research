@@ -1,0 +1,14 @@
+{
+  "n_samples": 1051,
+  "accuracy": 0.9657469077069457,
+  "mean_confidence": 0.9744788022049214,
+  "confidence_accuracy_gap": 0.008731894497975734,
+  "ece_15_bins": 0.013332951768278273,
+  "brier_score": 0.054917427375509184,
+  "negative_log_likelihood": 0.11556538590334343,
+  "n_bins": 15,
+  "raw_probability_row_sum_min": 0.9999998691873772,
+  "raw_probability_row_sum_max": 1.000000130072294,
+  "normalized_probability_row_sum_min": 0.9999999999999998,
+  "normalized_probability_row_sum_max": 1.0000000000000002
+}
