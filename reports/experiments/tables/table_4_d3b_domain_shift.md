@@ -1,5 +1,5 @@
 | Model | D3B slices | D3B patients | D3B series | Slice-level glioma prediction rate | Patient-majority glioma rate | Series-majority glioma rate | Mean glioma probability | Median glioma probability | Mean max confidence | Mean entropy |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| E001 ResNet18 | 265 | 53 | 53 | 0.2943 | 0.2642 | 0.2642 | 0.2936 | 0.1478 | 0.7209 | 0.7157 |
-| E002 EfficientNet-B0 | 265 | 53 | 53 | 0.4415 | 0.4717 | 0.4717 | 0.3879 | 0.3442 | 0.6837 | 0.797 |
-| E003 ViT-B/16 | 265 | 53 | 53 | 0.4038 | 0.3774 | 0.3774 | 0.3553 | 0.3185 | 0.7203 | 0.6748 |
+| E001 ResNet18 | 265 | 53 | 53 | 0.3245 | 0.3019 | 0.3019 | 0.3224 | 0.206 | 0.6958 | 0.7487 |
+| E002 EfficientNet-B0 | 265 | 53 | 53 | 0.3283 | 0.3585 | 0.3585 | 0.3144 | 0.1656 | 0.7135 | 0.7112 |
+| E003 ViT-B/16 | 265 | 53 | 53 | 0.1509 | 0.1321 | 0.1321 | 0.181 | 0.0718 | 0.7989 | 0.5 |

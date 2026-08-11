@@ -1,5 +1,5 @@
 | Model | Temperature | Raw glioma prediction rate | Scaled glioma prediction rate | Raw mean glioma probability | Scaled mean glioma probability | Raw mean max confidence | Scaled mean max confidence | Raw mean entropy | Scaled mean entropy | Raw patient-majority glioma rate | Scaled patient-majority glioma rate | Raw series-majority glioma rate | Scaled series-majority glioma rate |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| E001 ResNet18 | 1.2328 | 0.2943 | 0.2943 | 0.2936 | 0.2927 | 0.7209 | 0.6678 | 0.7157 | 0.8363 | 0.2642 | 0.2642 | 0.2642 | 0.2642 |
-| E002 EfficientNet-B0 | 1.1596 | 0.4415 | 0.4415 | 0.3879 | 0.3776 | 0.6837 | 0.6451 | 0.797 | 0.8838 | 0.4717 | 0.4717 | 0.4717 | 0.4717 |
-| E003 ViT-B/16 | 1.2363 | 0.4038 | 0.4038 | 0.3553 | 0.3488 | 0.7203 | 0.671 | 0.6748 | 0.7913 | 0.3774 | 0.3774 | 0.3774 | 0.3774 |
+| E001 ResNet18 | 1.1519 | 0.3245 | 0.3245 | 0.3224 | 0.3196 | 0.6958 | 0.6616 | 0.7487 | 0.8257 | 0.3019 | 0.3019 | 0.3019 | 0.3019 |
+| E002 EfficientNet-B0 | 1.304 | 0.3283 | 0.3283 | 0.3144 | 0.3067 | 0.7135 | 0.6517 | 0.7112 | 0.8519 | 0.3585 | 0.3585 | 0.3585 | 0.3585 |
+| E003 ViT-B/16 | 1.2306 | 0.1509 | 0.1509 | 0.181 | 0.1924 | 0.7989 | 0.7585 | 0.5 | 0.601 | 0.1321 | 0.1321 | 0.1321 | 0.1321 |
