@@ -10,23 +10,23 @@ Temperature scaling was fitted using validation-set logits only. The learned tem
 
 ## Temperature
 
-- Learned temperature: `1.236274`
+- Learned temperature: `1.257989`
 
 ## Test Metrics Before and After Temperature Scaling
 
 | Metric | Raw softmax | Temperature-scaled |
 |---|---:|---:|
-| accuracy | 0.9581 | 0.9581 |
-| balanced_accuracy | 0.9578 | 0.9578 |
-| macro_f1 | 0.9582 | 0.9582 |
-| mean_confidence | 0.9740 | 0.9636 |
-| confidence_accuracy_gap | 0.0159 | 0.0055 |
-| ece_15_bins | 0.0198 | 0.0109 |
-| brier_score | 0.0689 | 0.0674 |
-| negative_log_likelihood | 0.1571 | 0.1451 |
+| accuracy | 0.9534 | 0.9534 |
+| balanced_accuracy | 0.9531 | 0.9531 |
+| macro_f1 | 0.9537 | 0.9537 |
+| mean_confidence | 0.9775 | 0.9681 |
+| confidence_accuracy_gap | 0.0241 | 0.0148 |
+| ece_15_bins | 0.0291 | 0.0271 |
+| brier_score | 0.0753 | 0.0719 |
+| negative_log_likelihood | 0.1654 | 0.1479 |
 
 ## Interpretation
 
-Temperature scaling reduced ECE from 0.0198 to 0.0109. NLL also improved from 0.1571 to 0.1451. The confidence-accuracy gap changed from 0.0159 to 0.0055.
+Temperature scaling reduced ECE from 0.0291 to 0.0271. NLL also improved from 0.1654 to 0.1479. The confidence-accuracy gap changed from 0.0241 to 0.0148.
 
 These results are still internal to D1 and should not be interpreted as external reliability evidence. The next major test is whether calibration behaviour changes under cross-dataset evaluation.
