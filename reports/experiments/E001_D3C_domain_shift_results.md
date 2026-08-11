@@ -6,7 +6,7 @@ E001 ResNet18 trained on D1 leakage-aware split, evaluated on D3C UPENN-GBM cent
 
 ## Inputs
 
-- Checkpoint: `experiments/E001_D1_resnet18_baseline/seed43/best_model.pt`
+- Checkpoint: `experiments/E001_D1_resnet18_baseline/seed44/best_model.pt`
 - D3C manifest: `data/processed/D3C_analysis_manifest.csv`
 - D3C slices evaluated: 3050
 - Patients represented: 610
@@ -20,79 +20,79 @@ D3C is glioma-focused and does not contain the full D1 four-class label set. The
 
 | Predicted class | Count | Proportion |
 |---|---:|---:|
-| glioma | 1931 | 0.6331 |
-| meningioma | 39 | 0.0128 |
-| notumor | 705 | 0.2311 |
-| pituitary | 375 | 0.1230 |
+| glioma | 1995 | 0.6541 |
+| meningioma | 21 | 0.0069 |
+| notumor | 853 | 0.2797 |
+| pituitary | 181 | 0.0593 |
 
 ## Core D3C Metrics
 
 | Metric | Value |
 |---|---:|
-| Glioma prediction rate, slice-level | 0.6331 |
-| Mean glioma probability | 0.5504 |
-| Median glioma probability | 0.6045 |
-| Mean maximum softmax confidence | 0.7395 |
-| Median maximum softmax confidence | 0.7565 |
-| Mean entropy | 0.6613 |
-| Median entropy | 0.7078 |
+| Glioma prediction rate, slice-level | 0.6541 |
+| Mean glioma probability | 0.5808 |
+| Median glioma probability | 0.6432 |
+| Mean maximum softmax confidence | 0.7512 |
+| Median maximum softmax confidence | 0.7639 |
+| Mean entropy | 0.6059 |
+| Median entropy | 0.6412 |
 
 ## Patient-Level Majority Prediction
 
 | Majority predicted class | Patient count |
 |---|---:|
-| glioma | 397 |
-| meningioma | 7 |
-| notumor | 132 |
-| pituitary | 74 |
+| glioma | 399 |
+| meningioma | 5 |
+| notumor | 170 |
+| pituitary | 36 |
 
-Patient-level majority glioma rate: `0.6508`
+Patient-level majority glioma rate: `0.6541`
 
 ## Series-Level Majority Prediction
 
 | Majority predicted class | Series count |
 |---|---:|
-| glioma | 397 |
-| meningioma | 7 |
-| notumor | 132 |
-| pituitary | 74 |
+| glioma | 399 |
+| meningioma | 5 |
+| notumor | 170 |
+| pituitary | 36 |
 
-Series-level majority glioma rate: `0.6508`
+Series-level majority glioma rate: `0.6541`
 
 ## Example Predictions
 
 | PatientID | SeriesDescription | Selected rank | Predicted class | Glioma probability | Max confidence | Entropy |
 |---|---|---:|---|---:|---:|---:|
-| UPENN-GBM-00001 | t1 axial stealth-post : Processed_CaPTk | 1 | glioma | 0.6709 | 0.6709 | 0.8577 |
-| UPENN-GBM-00001 | t1 axial stealth-post : Processed_CaPTk | 2 | glioma | 0.7682 | 0.7682 | 0.7327 |
-| UPENN-GBM-00001 | t1 axial stealth-post : Processed_CaPTk | 3 | glioma | 0.5947 | 0.5947 | 0.9734 |
-| UPENN-GBM-00001 | t1 axial stealth-post : Processed_CaPTk | 4 | glioma | 0.4986 | 0.4986 | 1.1648 |
-| UPENN-GBM-00001 | t1 axial stealth-post : Processed_CaPTk | 5 | glioma | 0.4956 | 0.4956 | 1.1457 |
-| UPENN-GBM-00002 | t1 axial stealth-post : Processed_CaPTk | 1 | notumor | 0.0734 | 0.9005 | 0.3917 |
-| UPENN-GBM-00002 | t1 axial stealth-post : Processed_CaPTk | 2 | notumor | 0.1023 | 0.8203 | 0.6316 |
-| UPENN-GBM-00002 | t1 axial stealth-post : Processed_CaPTk | 3 | notumor | 0.2112 | 0.6776 | 0.8942 |
-| UPENN-GBM-00002 | t1 axial stealth-post : Processed_CaPTk | 4 | notumor | 0.3783 | 0.4999 | 1.0553 |
-| UPENN-GBM-00002 | t1 axial stealth-post : Processed_CaPTk | 5 | notumor | 0.3196 | 0.6215 | 0.8586 |
-| UPENN-GBM-00003 | t1 axial stealth-post : Processed_CaPTk | 1 | notumor | 0.0819 | 0.8756 | 0.4722 |
-| UPENN-GBM-00003 | t1 axial stealth-post : Processed_CaPTk | 2 | notumor | 0.0128 | 0.9838 | 0.0928 |
-| UPENN-GBM-00003 | t1 axial stealth-post : Processed_CaPTk | 3 | notumor | 0.0425 | 0.9512 | 0.2171 |
-| UPENN-GBM-00003 | t1 axial stealth-post : Processed_CaPTk | 4 | notumor | 0.0386 | 0.9559 | 0.2007 |
-| UPENN-GBM-00003 | t1 axial stealth-post : Processed_CaPTk | 5 | notumor | 0.0210 | 0.9721 | 0.1473 |
-| UPENN-GBM-00004 | t1 axial stealth-post : Processed_CaPTk | 1 | glioma | 0.9839 | 0.9839 | 0.0978 |
-| UPENN-GBM-00004 | t1 axial stealth-post : Processed_CaPTk | 2 | glioma | 0.9894 | 0.9894 | 0.0687 |
-| UPENN-GBM-00004 | t1 axial stealth-post : Processed_CaPTk | 3 | glioma | 0.9894 | 0.9894 | 0.0683 |
-| UPENN-GBM-00004 | t1 axial stealth-post : Processed_CaPTk | 4 | glioma | 0.9758 | 0.9758 | 0.1302 |
-| UPENN-GBM-00004 | t1 axial stealth-post : Processed_CaPTk | 5 | glioma | 0.9740 | 0.9740 | 0.1327 |
-| UPENN-GBM-00005 | t1 axial stealth-post : Processed_CaPTk | 1 | notumor | 0.3912 | 0.4315 | 1.0435 |
-| UPENN-GBM-00005 | t1 axial stealth-post : Processed_CaPTk | 2 | glioma | 0.8031 | 0.8031 | 0.6388 |
-| UPENN-GBM-00005 | t1 axial stealth-post : Processed_CaPTk | 3 | notumor | 0.2365 | 0.6492 | 0.8925 |
-| UPENN-GBM-00005 | t1 axial stealth-post : Processed_CaPTk | 4 | notumor | 0.1609 | 0.6309 | 0.9256 |
-| UPENN-GBM-00005 | t1 axial stealth-post : Processed_CaPTk | 5 | glioma | 0.4969 | 0.4969 | 1.0478 |
-| UPENN-GBM-00006 | t1 axial stealth-post : Processed_CaPTk | 1 | glioma | 0.9489 | 0.9489 | 0.2548 |
-| UPENN-GBM-00006 | t1 axial stealth-post : Processed_CaPTk | 2 | glioma | 0.8352 | 0.8352 | 0.5968 |
-| UPENN-GBM-00006 | t1 axial stealth-post : Processed_CaPTk | 3 | glioma | 0.7042 | 0.7042 | 0.7884 |
-| UPENN-GBM-00006 | t1 axial stealth-post : Processed_CaPTk | 4 | glioma | 0.7915 | 0.7915 | 0.6573 |
-| UPENN-GBM-00006 | t1 axial stealth-post : Processed_CaPTk | 5 | glioma | 0.4552 | 0.4552 | 0.9897 |
+| UPENN-GBM-00001 | t1 axial stealth-post : Processed_CaPTk | 1 | glioma | 0.5679 | 0.5679 | 0.7510 |
+| UPENN-GBM-00001 | t1 axial stealth-post : Processed_CaPTk | 2 | glioma | 0.8890 | 0.8890 | 0.3696 |
+| UPENN-GBM-00001 | t1 axial stealth-post : Processed_CaPTk | 3 | notumor | 0.4276 | 0.5531 | 0.7732 |
+| UPENN-GBM-00001 | t1 axial stealth-post : Processed_CaPTk | 4 | notumor | 0.4518 | 0.5320 | 0.7724 |
+| UPENN-GBM-00001 | t1 axial stealth-post : Processed_CaPTk | 5 | notumor | 0.1739 | 0.8022 | 0.5867 |
+| UPENN-GBM-00002 | t1 axial stealth-post : Processed_CaPTk | 1 | glioma | 0.5949 | 0.5949 | 0.8509 |
+| UPENN-GBM-00002 | t1 axial stealth-post : Processed_CaPTk | 2 | glioma | 0.5209 | 0.5209 | 0.8246 |
+| UPENN-GBM-00002 | t1 axial stealth-post : Processed_CaPTk | 3 | glioma | 0.6250 | 0.6250 | 0.8350 |
+| UPENN-GBM-00002 | t1 axial stealth-post : Processed_CaPTk | 4 | glioma | 0.8579 | 0.8579 | 0.5312 |
+| UPENN-GBM-00002 | t1 axial stealth-post : Processed_CaPTk | 5 | glioma | 0.8000 | 0.8000 | 0.6228 |
+| UPENN-GBM-00003 | t1 axial stealth-post : Processed_CaPTk | 1 | notumor | 0.1547 | 0.8298 | 0.5146 |
+| UPENN-GBM-00003 | t1 axial stealth-post : Processed_CaPTk | 2 | notumor | 0.0796 | 0.9193 | 0.2872 |
+| UPENN-GBM-00003 | t1 axial stealth-post : Processed_CaPTk | 3 | notumor | 0.0842 | 0.9144 | 0.3002 |
+| UPENN-GBM-00003 | t1 axial stealth-post : Processed_CaPTk | 4 | notumor | 0.1177 | 0.8813 | 0.3706 |
+| UPENN-GBM-00003 | t1 axial stealth-post : Processed_CaPTk | 5 | glioma | 0.5055 | 0.5055 | 0.7035 |
+| UPENN-GBM-00004 | t1 axial stealth-post : Processed_CaPTk | 1 | glioma | 0.9947 | 0.9947 | 0.0356 |
+| UPENN-GBM-00004 | t1 axial stealth-post : Processed_CaPTk | 2 | glioma | 0.9950 | 0.9950 | 0.0339 |
+| UPENN-GBM-00004 | t1 axial stealth-post : Processed_CaPTk | 3 | glioma | 0.9959 | 0.9959 | 0.0290 |
+| UPENN-GBM-00004 | t1 axial stealth-post : Processed_CaPTk | 4 | glioma | 0.9905 | 0.9905 | 0.0551 |
+| UPENN-GBM-00004 | t1 axial stealth-post : Processed_CaPTk | 5 | glioma | 0.9827 | 0.9827 | 0.0913 |
+| UPENN-GBM-00005 | t1 axial stealth-post : Processed_CaPTk | 1 | glioma | 0.5634 | 0.5634 | 0.7675 |
+| UPENN-GBM-00005 | t1 axial stealth-post : Processed_CaPTk | 2 | glioma | 0.8629 | 0.8629 | 0.4332 |
+| UPENN-GBM-00005 | t1 axial stealth-post : Processed_CaPTk | 3 | notumor | 0.2159 | 0.7579 | 0.6382 |
+| UPENN-GBM-00005 | t1 axial stealth-post : Processed_CaPTk | 4 | notumor | 0.2205 | 0.7715 | 0.5732 |
+| UPENN-GBM-00005 | t1 axial stealth-post : Processed_CaPTk | 5 | glioma | 0.4893 | 0.4893 | 0.8414 |
+| UPENN-GBM-00006 | t1 axial stealth-post : Processed_CaPTk | 1 | glioma | 0.8637 | 0.8637 | 0.4719 |
+| UPENN-GBM-00006 | t1 axial stealth-post : Processed_CaPTk | 2 | glioma | 0.7132 | 0.7132 | 0.7928 |
+| UPENN-GBM-00006 | t1 axial stealth-post : Processed_CaPTk | 3 | notumor | 0.3002 | 0.6953 | 0.6412 |
+| UPENN-GBM-00006 | t1 axial stealth-post : Processed_CaPTk | 4 | notumor | 0.4370 | 0.5553 | 0.7306 |
+| UPENN-GBM-00006 | t1 axial stealth-post : Processed_CaPTk | 5 | notumor | 0.4195 | 0.5638 | 0.7646 |
 
 ## Interpretation
 
