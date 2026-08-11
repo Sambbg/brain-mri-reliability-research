@@ -6,9 +6,9 @@ E001 ResNet18 trained on D1, evaluated on D3B ICDC-Glioma central slices. The te
 
 ## Inputs
 
-- Raw D3B predictions: `experiments/E001_D1_resnet18_baseline/seed44/d3b_predictions.csv`
-- Temperature metrics: `experiments/E001_D1_resnet18_baseline/seed44/temperature_scaling_metrics.json`
-- Learned temperature: `1.172485`
+- Raw D3B predictions: `experiments/E001_D1_resnet18_baseline/seed45/d3b_predictions.csv`
+- Temperature metrics: `experiments/E001_D1_resnet18_baseline/seed45/temperature_scaling_metrics.json`
+- Learned temperature: `1.311330`
 - Slices evaluated: 265
 - Patients represented: 53
 - Series represented: 53
@@ -21,33 +21,33 @@ D3B is glioma-focused and does not contain the full four-class label set. This i
 
 | Metric | Raw softmax | Temperature-scaled |
 |---|---:|---:|
-| Glioma prediction rate, slice-level | 0.3245 | 0.3245 |
-| Mean glioma probability | 0.3320 | 0.3281 |
-| Median glioma probability | 0.1474 | 0.1636 |
-| Mean max confidence | 0.7273 | 0.6901 |
-| Median max confidence | 0.7428 | 0.6949 |
-| Mean entropy | 0.6810 | 0.7684 |
-| Median entropy | 0.7006 | 0.7722 |
-| Patient-majority glioma rate | 0.3208 | 0.3208 |
-| Series-majority glioma rate | 0.3208 | 0.3208 |
+| Glioma prediction rate, slice-level | 0.5925 | 0.5925 |
+| Mean glioma probability | 0.5425 | 0.5159 |
+| Median glioma probability | 0.6383 | 0.5685 |
+| Mean max confidence | 0.7670 | 0.7099 |
+| Median max confidence | 0.7876 | 0.7070 |
+| Mean entropy | 0.5757 | 0.7134 |
+| Median entropy | 0.6199 | 0.7661 |
+| Patient-majority glioma rate | 0.6226 | 0.6226 |
+| Series-majority glioma rate | 0.6226 | 0.6226 |
 
 ## Slice-Level Prediction Distribution
 
 | Class | Raw count | Raw proportion | Scaled count | Scaled proportion |
 |---|---:|---:|---:|---:|
-| glioma | 86 | 0.3245 | 86 | 0.3245 |
-| meningioma | 52 | 0.1962 | 52 | 0.1962 |
-| notumor | 30 | 0.1132 | 30 | 0.1132 |
-| pituitary | 97 | 0.3660 | 97 | 0.3660 |
+| glioma | 157 | 0.5925 | 157 | 0.5925 |
+| meningioma | 29 | 0.1094 | 29 | 0.1094 |
+| notumor | 46 | 0.1736 | 46 | 0.1736 |
+| pituitary | 33 | 0.1245 | 33 | 0.1245 |
 
 ## Patient-Level Majority Prediction Distribution
 
 | Class | Raw patient count | Scaled patient count |
 |---|---:|---:|
-| glioma | 17 | 17 |
-| meningioma | 10 | 10 |
-| notumor | 6 | 6 |
-| pituitary | 20 | 20 |
+| glioma | 33 | 33 |
+| meningioma | 5 | 5 |
+| notumor | 10 | 10 |
+| pituitary | 5 | 5 |
 
 ## Interpretation
 
