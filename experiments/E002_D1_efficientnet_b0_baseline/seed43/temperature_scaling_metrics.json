@@ -1,0 +1,29 @@
+{
+  "experiment": "E002_temperature_scaling",
+  "base_experiment": "E002_D1_efficientnet_b0_baseline",
+  "git_commit_hash": "ddbed39ad9c1f8dede18cb646d05c26353a2a07f",
+  "temperature_fitted_on": "validation_split_only",
+  "learned_temperature": 1.3075844049453735,
+  "validation_samples": 1053,
+  "test_samples": 1051,
+  "raw_test_metrics": {
+    "accuracy": 0.9647954329210275,
+    "balanced_accuracy": 0.9645125239353678,
+    "macro_f1": 0.9648847091660329,
+    "mean_confidence": 0.985359055259911,
+    "confidence_accuracy_gap": 0.020563622338883425,
+    "ece_15_bins": 0.02056362233888335,
+    "brier_score": 0.052074498165875394,
+    "negative_log_likelihood": 0.12624169834255788
+  },
+  "temperature_scaled_test_metrics": {
+    "accuracy": 0.9647954329210275,
+    "balanced_accuracy": 0.9645125239353678,
+    "macro_f1": 0.9648847091660329,
+    "mean_confidence": 0.9791778928769068,
+    "confidence_accuracy_gap": 0.014382459955879279,
+    "ece_15_bins": 0.015657165445592668,
+    "brier_score": 0.04977424082196029,
+    "negative_log_likelihood": 0.10811746907495236
+  }
+}
