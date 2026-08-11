@@ -6,7 +6,7 @@ E002 EfficientNet-B0 trained on D1 leakage-aware split, evaluated on D3B ICDC-Gl
 
 ## Inputs
 
-- Checkpoint: `experiments/E002_D1_efficientnet_b0_baseline/seed43/best_model.pt`
+- Checkpoint: `experiments/E002_D1_efficientnet_b0_baseline/seed44/best_model.pt`
 - D3B manifest: `data/processed/D3B_selected_slices_manifest_phash.csv`
 - D3B slices evaluated: 265
 - Patients represented: 53
@@ -20,79 +20,79 @@ D3B is glioma-focused and does not contain the full D1 four-class label set. The
 
 | Predicted class | Count | Proportion |
 |---|---:|---:|
-| glioma | 59 | 0.2226 |
-| meningioma | 33 | 0.1245 |
-| notumor | 58 | 0.2189 |
-| pituitary | 115 | 0.4340 |
+| glioma | 101 | 0.3811 |
+| meningioma | 56 | 0.2113 |
+| notumor | 50 | 0.1887 |
+| pituitary | 58 | 0.2189 |
 
 ## Core D3B Metrics
 
 | Metric | Value |
 |---|---:|
-| Glioma prediction rate, slice-level | 0.2226 |
-| Mean glioma probability | 0.2268 |
-| Median glioma probability | 0.0706 |
-| Mean maximum softmax confidence | 0.7670 |
-| Median maximum softmax confidence | 0.8006 |
-| Mean entropy | 0.5998 |
-| Median entropy | 0.6187 |
+| Glioma prediction rate, slice-level | 0.3811 |
+| Mean glioma probability | 0.3522 |
+| Median glioma probability | 0.2269 |
+| Mean maximum softmax confidence | 0.7259 |
+| Median maximum softmax confidence | 0.7509 |
+| Mean entropy | 0.6866 |
+| Median entropy | 0.7194 |
 
 ## Patient-Level Majority Prediction
 
 | Majority predicted class | Patient count |
 |---|---:|
-| glioma | 12 |
-| meningioma | 5 |
-| notumor | 13 |
-| pituitary | 23 |
+| glioma | 21 |
+| meningioma | 11 |
+| notumor | 10 |
+| pituitary | 11 |
 
-Patient-level majority glioma rate: `0.2264`
+Patient-level majority glioma rate: `0.3962`
 
 ## Series-Level Majority Prediction
 
 | Majority predicted class | Series count |
 |---|---:|
-| glioma | 12 |
-| meningioma | 5 |
-| notumor | 13 |
-| pituitary | 23 |
+| glioma | 21 |
+| meningioma | 11 |
+| notumor | 10 |
+| pituitary | 11 |
 
-Series-level majority glioma rate: `0.2264`
+Series-level majority glioma rate: `0.3962`
 
 ## Example Predictions
 
 | PatientID | SeriesDescription | Selected rank | Predicted class | Glioma probability | Max confidence | Entropy |
 |---|---|---:|---|---:|---:|---:|
-| GLIOMA01-i_6561 | FSPGR 3D | 1 | meningioma | 0.0831 | 0.5293 | 1.1241 |
-| GLIOMA01-i_6561 | FSPGR 3D | 2 | meningioma | 0.1382 | 0.4873 | 1.1458 |
-| GLIOMA01-i_6561 | FSPGR 3D | 3 | meningioma | 0.2221 | 0.4369 | 1.1793 |
-| GLIOMA01-i_6561 | FSPGR 3D | 4 | meningioma | 0.1893 | 0.5021 | 1.1341 |
-| GLIOMA01-i_6561 | FSPGR 3D | 5 | meningioma | 0.1145 | 0.7300 | 0.8501 |
-| GLIOMA01-i_C3C0 | t1_cor_tse post gad | 1 | glioma | 0.6074 | 0.6074 | 1.0222 |
-| GLIOMA01-i_C3C0 | t1_cor_tse post gad | 2 | glioma | 0.9207 | 0.9207 | 0.3630 |
-| GLIOMA01-i_C3C0 | t1_cor_tse post gad | 3 | meningioma | 0.0260 | 0.9465 | 0.2643 |
-| GLIOMA01-i_C3C0 | t1_cor_tse post gad | 4 | meningioma | 0.1777 | 0.7993 | 0.5880 |
-| GLIOMA01-i_C3C0 | t1_cor_tse post gad | 5 | pituitary | 0.1795 | 0.4979 | 1.2422 |
-| GLIOMA01-i_BF76 | Ax T1 +C | 1 | pituitary | 0.0140 | 0.9122 | 0.3700 |
-| GLIOMA01-i_BF76 | Ax T1 +C | 2 | pituitary | 0.0219 | 0.9369 | 0.3011 |
-| GLIOMA01-i_BF76 | Ax T1 +C | 3 | pituitary | 0.0426 | 0.9353 | 0.2948 |
-| GLIOMA01-i_BF76 | Ax T1 +C | 4 | pituitary | 0.0966 | 0.8797 | 0.4437 |
-| GLIOMA01-i_BF76 | Ax T1 +C | 5 | pituitary | 0.0255 | 0.9581 | 0.2133 |
-| GLIOMA01-i_1165 | MP RAGE FS +C SUB | 1 | notumor | 0.0772 | 0.6875 | 0.8897 |
-| GLIOMA01-i_1165 | MP RAGE FS +C SUB | 2 | notumor | 0.0286 | 0.7374 | 0.7657 |
-| GLIOMA01-i_1165 | MP RAGE FS +C SUB | 3 | notumor | 0.0295 | 0.8635 | 0.5234 |
-| GLIOMA01-i_1165 | MP RAGE FS +C SUB | 4 | notumor | 0.0401 | 0.8572 | 0.5545 |
-| GLIOMA01-i_1165 | MP RAGE FS +C SUB | 5 | notumor | 0.0348 | 0.8708 | 0.5145 |
-| GLIOMA01-i_8743 | AX FSE T1 | 1 | pituitary | 0.1653 | 0.5312 | 1.1931 |
-| GLIOMA01-i_8743 | AX FSE T1 | 2 | glioma | 0.4163 | 0.4163 | 1.2527 |
-| GLIOMA01-i_8743 | AX FSE T1 | 3 | pituitary | 0.3120 | 0.4274 | 1.2340 |
-| GLIOMA01-i_8743 | AX FSE T1 | 4 | glioma | 0.4563 | 0.4563 | 1.1489 |
-| GLIOMA01-i_8743 | AX FSE T1 | 5 | glioma | 0.7280 | 0.7280 | 0.7376 |
-| GLIOMA01-i_FECA | T1/T/SE  +C | 1 | meningioma | 0.0225 | 0.9469 | 0.2536 |
-| GLIOMA01-i_FECA | T1/T/SE  +C | 2 | meningioma | 0.0472 | 0.8843 | 0.4455 |
-| GLIOMA01-i_FECA | T1/T/SE  +C | 3 | meningioma | 0.0178 | 0.9644 | 0.1848 |
-| GLIOMA01-i_FECA | T1/T/SE  +C | 4 | meningioma | 0.0249 | 0.9709 | 0.1467 |
-| GLIOMA01-i_FECA | T1/T/SE  +C | 5 | meningioma | 0.0170 | 0.9578 | 0.2205 |
+| GLIOMA01-i_6561 | FSPGR 3D | 1 | meningioma | 0.3687 | 0.6148 | 0.7450 |
+| GLIOMA01-i_6561 | FSPGR 3D | 2 | meningioma | 0.2882 | 0.7006 | 0.6651 |
+| GLIOMA01-i_6561 | FSPGR 3D | 3 | glioma | 0.5793 | 0.5793 | 0.7581 |
+| GLIOMA01-i_6561 | FSPGR 3D | 4 | glioma | 0.5229 | 0.5229 | 0.7946 |
+| GLIOMA01-i_6561 | FSPGR 3D | 5 | meningioma | 0.3398 | 0.6471 | 0.7145 |
+| GLIOMA01-i_C3C0 | t1_cor_tse post gad | 1 | meningioma | 0.2407 | 0.3760 | 1.3266 |
+| GLIOMA01-i_C3C0 | t1_cor_tse post gad | 2 | glioma | 0.8631 | 0.8631 | 0.5245 |
+| GLIOMA01-i_C3C0 | t1_cor_tse post gad | 3 | meningioma | 0.1053 | 0.7369 | 0.8224 |
+| GLIOMA01-i_C3C0 | t1_cor_tse post gad | 4 | meningioma | 0.4058 | 0.4803 | 1.0079 |
+| GLIOMA01-i_C3C0 | t1_cor_tse post gad | 5 | notumor | 0.2722 | 0.6338 | 0.9291 |
+| GLIOMA01-i_BF76 | Ax T1 +C | 1 | meningioma | 0.1017 | 0.5122 | 0.9793 |
+| GLIOMA01-i_BF76 | Ax T1 +C | 2 | meningioma | 0.2404 | 0.4894 | 1.1000 |
+| GLIOMA01-i_BF76 | Ax T1 +C | 3 | pituitary | 0.0441 | 0.8663 | 0.5056 |
+| GLIOMA01-i_BF76 | Ax T1 +C | 4 | pituitary | 0.1207 | 0.8431 | 0.5350 |
+| GLIOMA01-i_BF76 | Ax T1 +C | 5 | pituitary | 0.1819 | 0.6735 | 0.9344 |
+| GLIOMA01-i_1165 | MP RAGE FS +C SUB | 1 | notumor | 0.0241 | 0.9117 | 0.3832 |
+| GLIOMA01-i_1165 | MP RAGE FS +C SUB | 2 | notumor | 0.0581 | 0.7858 | 0.7269 |
+| GLIOMA01-i_1165 | MP RAGE FS +C SUB | 3 | notumor | 0.0820 | 0.7320 | 0.8552 |
+| GLIOMA01-i_1165 | MP RAGE FS +C SUB | 4 | notumor | 0.0616 | 0.7812 | 0.7394 |
+| GLIOMA01-i_1165 | MP RAGE FS +C SUB | 5 | notumor | 0.1373 | 0.4833 | 1.1863 |
+| GLIOMA01-i_8743 | AX FSE T1 | 1 | glioma | 0.4059 | 0.4059 | 1.1807 |
+| GLIOMA01-i_8743 | AX FSE T1 | 2 | glioma | 0.5470 | 0.5470 | 1.1370 |
+| GLIOMA01-i_8743 | AX FSE T1 | 3 | glioma | 0.7015 | 0.7015 | 0.8616 |
+| GLIOMA01-i_8743 | AX FSE T1 | 4 | glioma | 0.9503 | 0.9503 | 0.2465 |
+| GLIOMA01-i_8743 | AX FSE T1 | 5 | glioma | 0.9934 | 0.9934 | 0.0466 |
+| GLIOMA01-i_FECA | T1/T/SE  +C | 1 | meningioma | 0.0051 | 0.9896 | 0.0665 |
+| GLIOMA01-i_FECA | T1/T/SE  +C | 2 | meningioma | 0.0183 | 0.9803 | 0.1026 |
+| GLIOMA01-i_FECA | T1/T/SE  +C | 3 | meningioma | 0.0347 | 0.9552 | 0.2097 |
+| GLIOMA01-i_FECA | T1/T/SE  +C | 4 | meningioma | 0.0159 | 0.9796 | 0.1126 |
+| GLIOMA01-i_FECA | T1/T/SE  +C | 5 | meningioma | 0.0015 | 0.9965 | 0.0273 |
 
 ## Interpretation
 
