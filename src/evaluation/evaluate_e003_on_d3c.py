@@ -21,7 +21,10 @@ SEED_SUBDIR = "seed" + os.environ.get("SEED", "42")
 EXPERIMENT_DIR = Path(f"experiments/E003_D1_vit_b16_baseline/{SEED_SUBDIR}")
 CHECKPOINT_PATH = EXPERIMENT_DIR / "best_model.pt"
 
-D3C_MANIFEST = Path("data/processed/D3C_selected_slices_manifest_phash.csv")
+# Analysis cohort: 610 series / 3050 slices, after the documented exclusion of the
+# 4 non-axial series (reports/datasets/D3C_cohort_exclusion_report.md). Reading the
+# pre-exclusion manifest here would make that exclusion a no-op.
+D3C_MANIFEST = Path("data/processed/D3C_analysis_manifest.csv")
 
 PREDICTIONS_CSV = EXPERIMENT_DIR / "d3c_predictions.csv"
 METRICS_JSON = EXPERIMENT_DIR / "d3c_domain_shift_metrics.json"
