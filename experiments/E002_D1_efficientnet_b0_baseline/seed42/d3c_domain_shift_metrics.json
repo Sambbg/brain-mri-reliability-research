@@ -1,0 +1,38 @@
+{
+  "n_slices": 3050,
+  "n_patients": 610,
+  "n_series": 610,
+  "glioma_prediction_rate": 0.4577049180327869,
+  "mean_glioma_probability": 0.4643477549047955,
+  "median_glioma_probability": 0.359183132648468,
+  "mean_max_confidence": 0.8631743008680031,
+  "median_max_confidence": 0.935412734746933,
+  "mean_entropy": 0.34431795647589825,
+  "median_entropy": 0.2639781189166335,
+  "prediction_counts": {
+    "glioma": 1396,
+    "meningioma": 25,
+    "notumor": 1597,
+    "pituitary": 32
+  },
+  "prediction_proportions": {
+    "glioma": 0.4577049180327869,
+    "meningioma": 0.00819672131147541,
+    "notumor": 0.5236065573770492,
+    "pituitary": 0.010491803278688525
+  },
+  "patient_majority_prediction_counts": {
+    "glioma": 280,
+    "meningioma": 5,
+    "notumor": 319,
+    "pituitary": 6
+  },
+  "patient_majority_glioma_rate": 0.45901639344262296,
+  "series_majority_prediction_counts": {
+    "glioma": 280,
+    "meningioma": 5,
+    "notumor": 319,
+    "pituitary": 6
+  },
+  "series_majority_glioma_rate": 0.45901639344262296
+}
