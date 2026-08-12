@@ -1,8 +1,10 @@
-# Session Notes — 2026-08-09
+# Session Notes — 2026-08-09 to 2026-08-12
 
 Working session covering two themes: enforcing the `CLAUDE.md` hard rules in the
-training and table-generation layer, and repairing the D3C cohort pipeline. All work
-is committed on `main`. No models were retrained and no results were regenerated.
+training and table-generation layer, repairing the D3C cohort pipeline, and running the
+seed sweep. All work is committed on `main`. Run set `2026-08-sweep-a` (seeds 42-46 x 3
+architectures) supersedes every earlier D1 and D3C number, including Run A, Run B, and
+the 0.69/0.46/0.22 glioma prediction rates.
 
 ## Commits
 
@@ -16,6 +18,19 @@ is committed on `main`. No models were retrained and no results were regenerated
 | `d3ad69a` | Rule 4 in `generate_summary_tables.py`: `assert_single_run_set()` aborts unless the three `provenance.json` files share a `run_id` and a `split_csv_sha256`; `git_commit` deliberately not asserted. Adds `table_1_run_set_provenance`. Refreshed the `CLAUDE.md` rule status. |
 | `7098e1f` | Header-based cohort composition in the D3C inspection: acquisition plane from the slice normal, contrast from `ContrastBolusAgent`, new columns in the series summary CSV. |
 | `94b4fc8` | Pre/post contrast from `ContrastBolusStartTime` versus `AcquisitionTime`, with field coverage reported before any verdict. |
+| `f5f844f` | D3C cohort completed: 614/614 series from the hash-pinned manifest, 0 failures. |
+| `311d47f` | A blank `SeriesInstanceUID` is an error, not a bin. 614 LICENSE sidecars had collapsed into a phantom 615th series; files are now partitioned by the DICM magic number and counted in the report. |
+| `f557f43` | D3C cohort exclusion at the analysis-manifest level: 4 non-axial series dropped, 11 oblique flagged, selection record and hash untouched. |
+| `3c3f677`, `1cc9aa7` | Skull-stripping audit and the resulting retraction. |
+| `17b3af3`, `776d9ec` | `src/stats/`: Wilson, patient-clustered bootstrap, McNemar with Holm, random-intercept logistic regression. 77 tests, cross-validated against statsmodels 0.14.6. |
+| `5ee1e28` | D3C inspection, pHash manifest and both overlap audits regenerated against the 614-series cohort. |
+| `98ecc2e`, `4ec3a01` | Seed sweep wiring: `--seed`, seed-scoped outputs, 21 downstream scripts re-pathed, rule 4 extended to require identical `seed`, resumable driver. |
+| `7049875` | D3C evaluation pointed at the analysis cohort; evaluation sweep driver. |
+| `237736a` | `src/stats/` wired to the real data: correlation, bootstrap CIs, McNemar/Holm, mixed model. |
+| `05f17a3` | Seed-42 investigation: partly characterised, not explained. |
+
+Plus 30 mechanical per-run commits from the two sweep drivers (15 training, 15
+evaluation), each committing one run's artefacts so the next passes `ensure_clean_git()`.
 
 ## Retraction: D3C is not skull-stripped
 
@@ -80,13 +95,23 @@ fix; the duplicated classifier is deleted.
   different series chosen for 28 of the patients both selectors kept.
 - **28 orphan directories deleted** (5,070 files), each re-verified at deletion time as
   a direct child of `RAW_DIR` and absent from the manifest. 547 correct series retained.
-- **67 missing series being re-downloaded.** In progress at session end (~562/614).
-  Inspection and conversion have not yet been run against the completed cohort.
+- **Complete: 614 / 614 series present**, 0 download failures, 113,133 DICOM files plus
+  614 LICENSE sidecars. Inspection and conversion both run: 614 series / 614 patients
+  inspected, 3,070 PNGs written.
+- **Analysis cohort: 610 patients / 3,050 slices** after excluding the 4 non-axial
+  series, with 11 oblique series flagged rather than dropped
+  (`reports/datasets/D3C_cohort_exclusion_report.md`). The selection manifest is
+  unchanged and keeps its hash.
+- **Independence audit redone** against the 614-series cohort: 21,529,910 comparisons,
+  0 exact overlaps, 7 near pairs (pHash <= 4), 0 cross-class. The 7 involve only 2 D3C
+  patients and 4 D1 images, all glioma-glioma, and **all four D1 images are in the
+  Training split**.
 
-## Header findings (provisional)
+## Header findings (confirmed on the full 614-series cohort)
 
-Measured on 553–555 series, first slice each, so the cross-slice orientation check is
-not included. To be confirmed by the full inspection run.
+Provisional first-slice figures were 3 non-axial and 7 oblique; the full run over all
+113,133 DICOM files gives **4 non-axial** (2 coronal, 2 sagittal) and **11 oblique >10°**,
+worst 26.1°, with **0 series showing inconsistent orientation across slices**.
 
 - **Plane:** 550 axial (99.46%), 2 coronal, 1 sagittal. Every series has
   `ImageOrientationPatient`.
@@ -114,57 +139,177 @@ not included. To be confirmed by the full inspection run.
 
 **No selection change has been made** on the basis of these findings, per instruction.
 
+## Seed sweep results — run set `2026-08-sweep-a`
+
+15 training runs (seeds 42–46 × 3 architectures) in 2:41:04, then 90 evaluation steps in
+9:24. D3C figures are on the **analysis cohort**: 610 patients / 3,050 slices, after the
+documented non-axial exclusion. All 15 runs carry a consistent `provenance.json`
+(`run_id`, `seed`, `seed_source=cli`, frozen split hash) and 15 distinct git commits, one
+per run.
+
+The refactor that added `--seed` was verified behaviour-neutral: E001 at seed 42
+reproduced the pre-refactor run on all six metrics to full float precision
+(`test_macro_f1` 0.9546127394877477, `best_epoch` 6).
+
+### Internal test macro-F1
+
+| Model | seed42 | seed43 | seed44 | seed45 | seed46 | mean ± SD |
+|---|---|---|---|---|---|---|
+| E001 ResNet18 | 0.9546 | 0.9677 | 0.9715 | 0.9723 | 0.9650 | 0.9662 ± 0.0071 |
+| E002 EfficientNet-B0 | 0.9744 | 0.9649 | 0.9632 | 0.9661 | 0.9678 | 0.9673 ± 0.0043 |
+| E003 ViT-B/16 | 0.9537 | 0.9565 | 0.9588 | 0.9564 | 0.9529 | 0.9557 ± 0.0024 |
+
+**Seed variation is as large as architecture variation.** E001 and E002 differ by 0.0011
+on the mean against SDs of 0.0071 and 0.0043, and their rank swaps between seeds (E002
+ahead at seed 42, E001 ahead at seed 44). Single-seed internal rankings are not stable.
+
+### D3C glioma prediction rate (610 patients / 3,050 slices)
+
+| Model | seed42 | seed43 | seed44 | seed45 | seed46 | mean ± SD |
+|---|---|---|---|---|---|---|
+| E001 ResNet18 | 0.8013 | 0.6331 | 0.6541 | 0.6613 | 0.6220 | 0.6744 ± 0.0727 |
+| E002 EfficientNet-B0 | 0.4577 | 0.6118 | 0.5256 | 0.4525 | 0.5213 | 0.5138 ± 0.0646 |
+| E003 ViT-B/16 | 0.4630 | 0.2102 | 0.2085 | 0.2502 | 0.1856 | 0.2635 ± 0.1139 |
+
+E001 > E002 > E003 holds at four of five seeds; the exception is seed 42, where E002 and
+E003 effectively tie. Separation relative to seed noise, as a gap-to-SD ratio: E001 vs
+E002 is **0.19 internally but 2.34 on D3C**; E001 vs E003, 2.22 against 4.40.
+
+### D3B glioma prediction rate (53 patients / 265 slices)
+
+| Model | seed42 | seed43 | seed44 | seed45 | seed46 | mean ± SD |
+|---|---|---|---|---|---|---|
+| E001 ResNet18 | 0.3094 | 0.4604 | 0.3245 | 0.5925 | 0.3245 | 0.4023 ± 0.1227 |
+| E002 EfficientNet-B0 | 0.5962 | 0.2226 | 0.3811 | 0.3132 | 0.3283 | 0.3683 ± 0.1396 |
+| E003 ViT-B/16 | 0.2377 | 0.2453 | 0.3283 | 0.2830 | 0.1509 | 0.2491 ± 0.0656 |
+
+**D3B supports no ranking claim.** There is no stable ordering: E001 and E002 alternate
+at the top across seeds, and E003 leads E001 at seed 44. At 53 patients the seed noise
+swamps any architecture effect. D3B should be reported as a cross-species probe with
+intervals, and must not be used to rank the models.
+
+### Internal performance against shifted-domain behaviour: Simpson's paradox
+
+| Grouping | n | Pearson r | 95% CI | p |
+|---|---|---|---|---|
+| Pooled (all 15 runs) | 15 | **+0.474** | [−0.049, 0.789] | 0.074 |
+| E001 within | 5 | −0.799 | [−0.987, 0.196] | 0.105 |
+| E002 within | 5 | −0.542 | [−0.966, 0.638] | 0.345 |
+| E003 within | 5 | −0.376 | [−0.951, 0.755] | 0.532 |
+| **Architecture-centred** | 15 | **−0.514** | [−0.812, −0.001] | **0.050** |
+
+The pooled and within-architecture correlations have **opposite signs**. Architecture is
+a confounder: E003 sits low on both axes and drags the pooled estimate positive. Holding
+architecture fixed, a run that scores better internally predicts glioma *less* often
+under shift. **Never quote the pooled figure on its own.** The centred estimate sits
+exactly on p = 0.050 and the within-architecture correlations are n=5 each, so this is
+suggestive, not established.
+
+### E001 vs E002 — the central comparison
+
+Random-intercept logistic regression, `glioma_predicted ~ model + (1|patient)`, E001 as
+reference, fitted per seed:
+
+| Seed | OR (E002 vs E001) | 95% CI | p | McNemar Holm p |
+|---|---|---|---|---|
+| 42 | 0.0765 | [0.0650, 0.0899] | 6.1e-212 | 4.4e-177 |
+| 43 | 0.8434 | [0.7318, 0.9721] | 1.9e-02 | 3.1e-02 |
+| 44 | 0.3842 | [0.3337, 0.4424] | 2.4e-40 | 5.1e-34 |
+| 45 | 0.1912 | [0.1639, 0.2230] | 1.7e-98 | 9.0e-100 |
+| 46 | 0.4590 | [0.3981, 0.5293] | 9.0e-27 | 3.0e-27 |
+
+**Direction consistent and significant at all five seeds**: E002 has lower odds of
+predicting glioma than E001 for the same patient. Two models internal macro-F1 cannot
+separate are clearly separated under shift. But the **magnitude is not stable** — OR
+spans 0.077 to 0.843, an elevenfold range — so "E001 predicts glioma more often than
+E002 under shift" is supported; "by a factor of X" is not. Seed 43 is the weak case and
+the only seed where the two bootstrap CIs overlap.
+
+Supporting inference: patient-clustered bootstrap (2,000 resamples of patients) gives a
+median CI width of 0.0626 against roughly 0.0334 for a naive slice-level interval, with
+ICC 0.489–0.690. Slice-level intervals would have been nearly twice too narrow, and at
+seed 43 would have falsely separated E001 from E002. McNemar with Holm: 14 of 15
+comparisons significant, the exception being E002 vs E003 at seed 42.
+
+### Seed 42 investigation: unexplained
+
+**Verdict: partly characterised, not explained.** Recorded in
+`reports/experiments/D3C_seed42_investigation.md`.
+
+- The premise that all three architectures are anomalous is **wrong**. Against each
+  model's own other four seeds, the seed-42 D3C rate is z=+8.7 (E001) and z=+9.3 (E003)
+  but **z=−1.1 for E002**, which is entirely ordinary. The non-significant McNemar is
+  E002 vs E003 and arises because E003 rose to meet a normal E002.
+- E003 alone shows a training-trajectory difference: 17 epochs, best epoch 12, against
+  10–12 epochs and best epoch 5–7 elsewhere.
+- E001 and E003 track each other across seeds at r=+0.993, and the association survives
+  dropping seed 42 (r=+0.842), so it is not an artefact of the outlier. E002 does not
+  track either. Seed 42 is the extreme end of a shared seed axis, not a discrete event.
+- **Nothing measured on D1 predicts the D3C rate** once architecture means are removed:
+  per-class recall, predicted-class shares, temperature, best epoch and epochs trained
+  are all non-significant.
+
+Report as **unexplained seed sensitivity**. Excluding seed 42 would need a reason
+established before its result was seen, and there is none. Report all five seeds with
+intervals.
+
 ## Outstanding
 
-**Blocking the frozen run set**
+**Analysis and reporting**
 
-- Re-download must complete, then `inspect_d3c_dicom_download.py` and
-  `convert_d3c_selected_slices.py` need running against the 614-series cohort.
-- Retraining under a single `RUN_ID` has not started. Until it does,
-  `generate_summary_tables.py` aborts by design (no `provenance.json` exists) and every
-  existing D1 and D3C number is superseded — including the 0.69/0.46/0.22 glioma
-  prediction rates and the independence audit, which was run against the 575-series
-  cohort.
-- Decision needed on the 3 non-axial and 7 oblique series.
+- **Segmentation-gated D3C** — not started. No design for this is recorded in the repo;
+  it needs specifying before it can be scoped.
+- **Figure regeneration with error bars.** `generate_summary_figures.py` and
+  `generate_d3c_summary.py` still draw single-seed figures. Every headline figure now
+  needs to show the seed spread, since the whole point of the sweep is that single-seed
+  values are unstable. The bootstrap intervals in
+  `reports/experiments/tables/d3c_bootstrap_intervals.csv` are the input.
+- **Seed-scope the tables.** `generate_summary_tables.py` writes to
+  `reports/experiments/tables/` regardless of `SEED`, so each run overwrites the last and
+  only the most recent seed survives on disk. Tables need a seed segment in their path
+  before the five seeds can coexist. The five per-seed table sets generated so far are
+  deliberately uncommitted for this reason.
 
 **Rule gaps (from the `CLAUDE.md` status list)**
 
+- **Rule 4 — the two summary scripts.** `generate_summary_figures.py` and
+  `generate_d3c_summary.py` aggregate across the three models with no
+  `assert_single_run_set()` call. They can silently mix seeds or run sets, which is
+  exactly the defect `generate_summary_tables.py` now guards against. This is the most
+  significant remaining gap.
+- **Rule 3:** the calibration, D3B/D3C evaluation and temperature-scaling scripts still
+  write unstamped artefacts — no `run_id`, seed or checkpoint hash. Their outputs are
+  traceable only by the directory they sit in.
 - **Rule 2:** `configs/E001_*.yaml` still declares `dataset.image_column`,
   `label_column`, `split_column`, `training.loss`, the whole `evaluation:` block and
   five `outputs.save_*` flags that no code reads.
-- **Rule 3:** the calibration, D3B/D3C evaluation and temperature-scaling scripts still
-  write unstamped artefacts.
-- **Rule 4:** `generate_summary_figures.py` and `generate_d3c_summary.py` aggregate
-  across the three models without asserting a shared run set.
-- **Rule 6 interaction:** with `experiments/` tracked, the first trainer's outputs dirty
-  the tree and `ensure_clean_git()` blocks the second. Commit each model's artefacts
-  before training the next. This is why `run_id`, not the git commit, identifies a run
-  set.
+
+**Statistical follow-ups**
+
+- The architecture-centred correlation sits exactly on p = 0.050 with n=15 and three
+  architecture means removed. It is suggestive, not established, and should not be
+  reported as a finding without more seeds.
+- The mixed model is fitted per seed. Pooling seeds needs a second random effect for
+  seed, which `src/stats/mixed_effects.py` does not implement.
+- Wilson intervals in `src/stats/wilson.py` are built and tested but still unused by any
+  analysis.
 
 **Repository hygiene**
 
-- 18 Run A artefacts became visible to git with the `.gitignore` fix and are
-  **deliberately uncommitted** — they predate rule 3, carry no provenance, and will be
-  superseded by the frozen run set. Decide whether to snapshot Run A or wait.
-- `reports/datasets/D3C_acquisition_log.md` and `d3c_selected_series_download/*` still
-  describe the defective 575-series download; left uncommitted until the re-download
-  regenerates them.
 - `all_series.csv` and `classified_series.csv` under
   `reports/datasets/d3c_upenn_gbm_series_selection/` are stale orphans from the Windows
-  import. No current script writes them and their category vocabulary is the deleted
-  classifier's — 35 `preferred_t1_postcontrast` against the real 605. Delete them, or
-  have the selection script write `classified_series.csv` so the analysis is
-  reproducible against the pinned cohort.
+  import, written by no current script, with the deleted classifier's vocabulary — 35
+  `preferred_t1_postcontrast` against the real 605. Delete, or have the selection script
+  write `classified_series.csv` so the analysis is reproducible against the pinned cohort.
 - Three D3C scripts carry a UTF-8 BOM from the Windows branch
   (`convert_d3c_selected_slices.py`, `probe_d3c_upenn_gbm_tcia.py`,
   `select_d3c_upenn_gbm_series.py`). Harmless to Python; inconsistent with the repo.
-**Untouched this session** (carried over from `CLAUDE.md` known context)
+- `~/research_ARCHIVE_RUN_A/` has never been verified to exist or to match the Run A
+  numbers it is supposed to preserve.
 
-- `src/stats/` remains unbuilt: Wilson intervals, patient-clustered bootstrap, McNemar
-  with Holm, mixed-effects logistic regression.
-- Seed sweep wired up: seeds 42–46 × 3 architectures via `scripts/run_seed_sweep.py`,
-  under `RUN_ID=2026-08-sweep-a`. Trainers take `--seed` and write to
-  `experiments/<exp>/seed<N>/`; downstream scripts resolve that directory from `SEED`.
-- ~~The D3C skull-stripping confound still needs a skull-stripping control on the D1
-  test split.~~ **Withdrawn.** D3C is not skull-stripped, so no such control is
-  required. See the retraction below.
+**Untouched** (carried over from `CLAUDE.md` known context)
+
+- D3C is co-registered, resampled and intensity-normalised by CaPTk while D1 is not.
+  That preprocessing difference stands as a limitation; it is not skull stripping.
+- Pre versus post contrast cannot be verified from D3C headers and remains inferred from
+  `SeriesDescription`.
