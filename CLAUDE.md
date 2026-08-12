@@ -29,7 +29,9 @@ reliability in brain MRI tumour classification.
 - Run A (Ubuntu, May 2026) produced tables 2-5: temperatures 1.2328/1.1596/1.2363,
   macro-F1 0.9666/0.9680/0.9582. Run B (Windows) produced tables 7-8: temperatures
   1.2725/1.1598/1.3770, macro-F1 0.9753/-/0.9648. Same split, different checkpoints.
-  All results must be regenerated from a single frozen run set.
+  **Both are superseded by run set `2026-08-sweep-a`** (seeds 42-46 x 3 architectures).
+  Do not reconcile current artefacts against these numbers; they are the historical
+  record of the defect that the sweep fixed. See Q1_REVIEW_AUDIT.md finding D-1.
 - Run A checkpoints archived at ~/research_ARCHIVE_RUN_A/.
 - D3C is 100% Processed_CaPTk. **It is NOT skull-stripped** — this corrects an earlier
   entry here that called it skull-stripped and required a skull-stripping control on the
@@ -44,12 +46,18 @@ reliability in brain MRI tumour classification.
 - The weaker preprocessing differences remain a stated limitation: D3C is
   co-registered, resampled and intensity-normalised by CaPTk, while D1 is not. That is a
   genuine domain difference and belongs in the limitations, but it is not skull removal.
-- No statistical inference exists in the repo yet. src/stats/ is to be built:
-  Wilson intervals, patient-clustered bootstrap, McNemar with Holm, mixed-effects
-  logistic regression.
-- Seed sweep: seeds 42-46 x 3 architectures, driven by `scripts/run_seed_sweep.py`,
-  which commits between runs so `ensure_clean_git()` passes and skips (seed,
-  architecture) pairs already recorded under the current RUN_ID, so it is resumable.
+- `src/stats/` is built and wired: Wilson intervals, patient-clustered bootstrap,
+  McNemar with Holm, random-intercept logistic regression. 77 tests, cross-validated
+  against statsmodels 0.14.6. Consumed by
+  `src/evaluation/analyse_seed_sweep_statistics.py`. Wilson intervals are implemented
+  and tested but not yet used by any analysis.
+- Seed sweep: seeds 42-46 x 3 architectures under `RUN_ID=2026-08-sweep-a`, driven by
+  `scripts/run_seed_sweep.py`; calibration, temperature scaling and the D3B/D3C
+  evaluations across all 15 checkpoints by `scripts/run_eval_sweep.py`. Both commit
+  between runs so `ensure_clean_git()` passes, and skip completed work, so both are
+  resumable. Analysis on top: `src/evaluation/analyse_seed_sweep_statistics.py` (the
+  consumer of `src/stats/`) and `src/evaluation/investigate_seed42_anomaly.py`.
+  `D3C_PIPELINE.md` holds the full run order.
 
 ## Environment
 
@@ -67,7 +75,10 @@ prevent.
   `seed_worker` and a seeded `Generator` are passed to every DataLoader, and
   `CUBLAS_WORKSPACE_CONFIG` is set at import time because it must precede CUDA init.
   Verified on torch 2.11.0+cu130: all three architectures give bitwise-identical
-  gradients across repeated passes.
+  gradients across repeated passes, and E001 trained twice at seed 42 reproduced all six
+  test metrics to full float precision. **Caveat:** `checkpoint_sha256` still differs
+  between such runs — that is `torch.save` serialisation, not nondeterminism. Compare
+  metrics, not checkpoint bytes. See SESSION_NOTES.md "Known traps".
 - **Rule 2 — enforced** in the trainers by `validate_config()`, which asserts
   `dataset_id`, `classes`, `architecture`, `optimizer` and
   `early_stopping.monitor`/`mode` against what the code implements. *Outstanding:*

@@ -83,6 +83,35 @@ selection rule with a different term vocabulary and disagreed with the authorita
 step. The single-source-of-truth manifest plus abort-on-orphan guards is the structural
 fix; the duplicated classifier is deleted.
 
+## Known traps
+
+Three facts that are easy to misread and are not obvious from the artefacts alone.
+
+**Commit `afbd3f2` is mislabelled.** Its subject line reads "E002 frozen run set, seed
+42", but it contains **no E002 files at all** — only three modified E001 files from a
+second E001 run. E002 was never trained under `RUN_ID=2026-08-frozen-a`; its directory was
+empty until the sweep. Anyone reading `git log --oneline` will believe a run set existed
+that never did. The commit is left as-is because rewriting history would be worse; this
+note is the correction. `2026-08-sweep-a` is the only complete run set.
+
+**`checkpoint_sha256` is not reproducible, and that is not a determinism failure.** E001
+was trained twice from the same seed at different commits and reproduced all six test
+metrics to full float precision (`test_macro_f1` 0.9546127394877477, `best_epoch` 6), but
+the two checkpoints have different SHA-256 digests. This is `torch.save` serialisation,
+not training nondeterminism. Since rule 3 records `checkpoint_sha256` and rule 1 claims
+determinism, a future session comparing two runs by checkpoint hash would reasonably but
+wrongly conclude that determinism had broken. **Compare metrics, not checkpoint bytes.**
+
+**The independence audit's comparison count overstates its power.** The near-overlap
+report cites 21,529,910 pairwise comparisons between D1 and D3C, which sounds
+exhaustive. But the D3C manifest holds 3,070 unique SHA-256 values and only **2,563
+unique pHash values** — the five central slices of a series are frequently pHash-identical
+to each other. The comparisons are therefore not 21.5M independent visual comparisons,
+and the "0 exact, 7 near" result is correspondingly weaker than the raw count implies.
+Related: all four D1 images in the 7 near pairs are in the **Training** split, so if those
+pairs are genuine near-duplicates rather than hash collisions, two of 614 D3C patients
+were seen in near-identical form during training.
+
 ## D3C cohort state
 
 - **Selected: 614 patients / 614 series** — 568 `preferred_t1_postcontrast`,

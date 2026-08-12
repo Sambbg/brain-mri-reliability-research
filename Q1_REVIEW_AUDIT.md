@@ -148,7 +148,45 @@ You group images by pHash Hamming distance ≤ 4 using union-find, then split by
 
 # 5. DATA & LEAKAGE AUDIT
 
-## D-1 — CRITICAL — Results derive from multiple, non-identical training runs
+## D-1 — ~~CRITICAL~~ **RESOLVED** — Results derive from multiple, non-identical training runs
+
+> **Resolved, 12 August 2026.** The finding was correct and is preserved in full, because
+> the numbers it cites are the historical record of the defect. Every figure quoted below
+> is **superseded by run set `2026-08-sweep-a`** and must not be reconciled against
+> current artefacts — the contradiction it documents is exactly what was fixed.
+>
+> The fix went further than the finding demanded. Rather than one frozen run, the
+> repository now holds a 15-run sweep, seeds 42-46 x 3 architectures, produced by
+> `scripts/run_seed_sweep.py` under a single `RUN_ID`, with every downstream artefact
+> regenerated from it by `scripts/run_eval_sweep.py` in one pass. All 15 runs carry a
+> `provenance.json` recording run_id, seed, git commit, split sha256 and checkpoint
+> sha256, and 15 distinct commits, one per run.
+>
+> Training is now deterministic (see P0-2), so the underlying cause cannot recur:
+> E001 at seed 42 was trained twice at different commits and reproduced all six test
+> metrics to full float precision (`test_macro_f1` 0.9546127394877477 both times).
+>
+> `generate_summary_tables.py` now refuses to write a table unless the three models share
+> a `run_id`, a `seed` and a `split_csv_sha256`, so the specific failure this finding
+> describes — tables assembled from different checkpoint sets — is now blocked
+> mechanically rather than by discipline.
+>
+> **Superseding numbers.** The headline that D3B and D3C used different checkpoint sets is
+> void: both are now evaluated from the same 15 checkpoints. The rank reversal question is
+> answered on new evidence in `reports/experiments/D3C_seed_sweep_statistics.md` — D3C
+> gives a stable E001 > E002 > E003 ordering at four of five seeds, while **D3B supports
+> no ranking claim at all** at 53 patients.
+>
+> Evidence: commits `98ecc2e`, `7049875`, `237736a`; `SESSION_NOTES.md` seed sweep
+> results.
+>
+> **Corrected severity: resolved. Not a blocker.** Two caveats survive and are tracked in
+> SESSION_NOTES.md: `generate_summary_figures.py` and `generate_d3c_summary.py` still
+> aggregate across models with no run-set assertion, and `checkpoint_sha256` is not
+> byte-reproducible across identical runs (a `torch.save` serialisation artefact, not
+> nondeterminism).
+
+### Original finding, as written (numbers superseded by `2026-08-sweep-a`)
 
 This is the defect that blocks everything else, so I will lay out the evidence completely.
 
@@ -233,7 +271,32 @@ The Nickparvar dataset is an aggregation of three sources (figshare/Cheng, SARTA
 
 **Severity: MEDIUM–HIGH depending on what you find. Investigate before writing.**
 
-## D-6 — MEDIUM — Undocumented cohort attrition in D3C
+## D-6 — ~~MEDIUM~~ **RESOLVED** — Undocumented cohort attrition in D3C
+
+> **Resolved, 12 August 2026.** The attrition was real and had two separate causes, both
+> now fixed and documented.
+>
+> The 614 -> 569 gap was **a bug, not attrition**. `download_d3c_selected_series.py`
+> re-implemented the selection rule with a different term vocabulary and disagreed with
+> the authoritative step: it dropped 39 patients (37 of them `preferred_t1_postcontrast`,
+> the highest-priority category) and chose a different series for 28 more, with the
+> outcome varying between runs because it depended on TCIA row order. The duplicate logic
+> is deleted; download, inspection and conversion are all driven by the selection manifest
+> and abort on any series it does not list. The cohort is now **614 / 614, 0 failures**.
+>
+> The remaining 614 -> 610 step is **documented, deliberate exclusion**: 4 non-axial
+> series removed as a plane confound against axial D1, applied at the analysis-manifest
+> level with the selection record and its hash left untouched, in
+> `reports/datasets/D3C_cohort_exclusion_report.md` with per-series reasons and counts.
+> Excluded slices are retained in `data/processed/D3C_excluded_slices.csv` so the
+> exclusion is auditable and reversible.
+>
+> Evidence: commits `0a896d7`, `dfe80b9`, `f5f844f`, `f557f43`.
+>
+> **Corrected severity: resolved.** The CONSORT-style flow diagram the finding asks for is
+> still worth producing for the paper, and the counts for every stage now exist.
+
+### Original finding, as written (the 569 figure is superseded)
 
 `selected_series_one_per_patient.csv` contains 614 patients. Your conversion report and all downstream tables report 569. **45 patients (7.3%) disappeared with no documented reason.** Reviewers ask about attrition. Produce a flow diagram (CONSORT-style) with exclusion counts and reasons at every stage for all three datasets.
 
@@ -496,14 +559,20 @@ For calibration on what that number means: 31% is "the project is real, the data
 
 ## P0 — MUST FIX BEFORE ANY PAPER WRITING
 
+> **Status, 12 August 2026: all six P0 items are closed.** P0-3 was withdrawn when D-2 was
+> retracted; the other five are complete, with evidence in each row. The remaining
+> blockers to submission are in P1 and in SESSION_NOTES.md Outstanding — principally the
+> rule-4 gap in `generate_summary_figures.py` and `generate_d3c_summary.py`, figures
+> without error bars, and seed-scoping the table output paths.
+
 | Item | Problem | Why it matters | Action | Files | New experiment? |
 |---|---|---|---|---|---|
-| **P0-1** | Results from ≥2 different runs; D3B and D3C use different checkpoints | Headline claim currently compares different models, not different probes | Tag commit, retrain all 3, regenerate everything in one pass, stamp checkpoint hashes, delete prior artefacts | all training + evaluation scripts, `generate_summary_tables.py` | **YES** |
-| **P0-2** | Non-deterministic training | Same seed does not reproduce; already caused P0-1 | Determinism flags, seeded workers, `--seed` CLI | 3 training scripts | **YES** |
+| ~~**P0-1**~~ **CLOSED** | ~~Results from ≥2 different runs~~ | Done, and exceeded: not one frozen run but 15 (seeds 42-46 × 3 architectures) under `RUN_ID=2026-08-sweep-a`, every downstream artefact regenerated from them in one pass. D3B and D3C now share the same checkpoints. Rule 4 blocks mixed-run tables mechanically. | `98ecc2e`, `7049875` | — |
+| ~~**P0-2**~~ **CLOSED** | ~~Non-deterministic training~~ | `cudnn.deterministic=True`, `benchmark=False`, `use_deterministic_algorithms(True)`, seeded `worker_init_fn` and `Generator`, `CUBLAS_WORKSPACE_CONFIG` before CUDA init, `--seed` CLI. Verified: E001 at seed 42 trained twice at different commits reproduced all six metrics to full float precision. Caveat: `checkpoint_sha256` still differs (torch.save serialisation), metrics do not. | `d6ae740`, `98ecc2e` | — |
 | ~~**P0-3**~~ | ~~D3C 100% CaPTk skull-stripped~~ **WITHDRAWN — D-2 retracted** | D3C retains skull and scalp; verified by measurement | No action required | — | **NO** |
-| **P0-4** | No variance estimates | Effect sizes are of the same order as run-to-run noise | 5 seeds × 3 architectures, mean ± SD everywhere | training scripts, table generation | **YES** |
-| **P0-5** | Zero statistical inference | Every claim is a bare point estimate | Wilson CIs, patient-clustered bootstrap, McNemar + Holm, mixed-effects logistic | new `src/stats/` | No (analysis) |
-| **P0-6** | Config declares unimplemented scheduler | Archived provenance misdescribes training | Remove or implement | E002/E003 configs, training scripts | **YES** if implemented |
+| ~~**P0-4**~~ **CLOSED** | ~~No variance estimates~~ | 5 seeds × 3 architectures run. The concern was correct: internal macro-F1 separates E001 and E002 by 0.0011 against SDs of 0.0071 and 0.0043, and their rank swaps between seeds. Mean ± SD now available for every metric. | `scripts/run_seed_sweep.py`, SESSION_NOTES.md | — |
+| ~~**P0-5**~~ **CLOSED** | ~~Zero statistical inference~~ | `src/stats/` built (77 tests, cross-validated against statsmodels 0.14.6) and wired to the real data: patient-clustered bootstrap CIs on all 15 D3C rates, McNemar + Holm per seed, random-intercept logistic model. Wilson intervals built but not yet used. | `17b3af3`, `776d9ec`, `237736a` | — |
+| ~~**P0-6**~~ **CLOSED** | ~~Config declares unimplemented scheduler~~ | Removed from both configs along with every other unread key; `validate_config()` now asserts config against executed code at run time. `config_used.yaml` is rendered with the effective seed rather than copied, so the archived config always describes its own run. *Open remnant:* `configs/E001_*.yaml` still declares unread keys. | `d6ae740`, `98ecc2e` | — |
 
 ## P1 — MUST COMPLETE BEFORE SUBMISSION
 
