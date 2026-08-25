@@ -1,0 +1,4 @@
+metric,between_architecture_spread,mean_within_architecture_sd,signal_to_noise,pairs_overlapping,pairs_total
+test_macro_f1,0.0116,0.0046,2.52,2,3
+d3b_glioma_rate,0.1532,0.1093,1.4,3,3
+d3c_glioma_rate,0.4109,0.0837,4.91,1,3
