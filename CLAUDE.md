@@ -153,3 +153,32 @@ These are research claims, not style preferences.
 - Independence audits (exact SHA-256 + perceptual hash) support visual distinctness
   only; they do not prove patient-level independence. Existing reports are worded
   carefully; preserve that.
+
+
+- **The D3B/D3C ordering reversal did not survive the sweep.** The thesis and
+  the pre-sweep drafts claim the architecture ordering reverses between the
+  canine and human probes ? ResNet18 weakest on D3B but strongest on D3C, ViT
+  the reverse. That was an artefact of comparing Run A's D3B against Run B's
+  D3C. Under `2026-08-sweep-a` the ordering is E001 > E002 > E003 on the means
+  of *both* probes, and E001 ranks first on D3C in 5 of 5 seeds. Do not restate
+  the reversal. See `reports/experiments/consolidated/CONSOLIDATED_RESULTS.md`.
+- **D3B cannot resolve architectures at n=53.** Between-architecture spread
+  0.1532 against a mean within-architecture seed SD of 0.1093 ? signal-to-noise
+  1.40, all three pairwise ranges overlap, four distinct orderings across five
+  seeds. D3C is 4.91 with one overlapping pair and two distinct orderings. D3B
+  supports the claim that all models under-recognise glioma under extreme
+  covariate shift; it does not support any ranking claim. Report it as a
+  supporting anchor, not a co-equal probe.
+- **Simpson's paradox is D3C-specific.** Internal macro-F1 against glioma rate:
+  D3C gives r = +0.886 between architectures and -0.514 within, a sign change.
+  D3B gives +0.956 and +0.664, no sign change.
+- **D3C cohort is 610 patients / 3,050 slices** under the sweep. The 569 / 2,845
+  figures in the thesis and `tables/table_6` are the superseded Run B cohort.
+- **Temperature is a property of the checkpoint, not the architecture.** Across
+  seeds E001 spans 1.1519-1.3113 and E002 1.0700-1.3076. Any text reporting a
+  single T per architecture is wrong; report mean +/- sd.
+- **Authoritative results live in `reports/experiments/consolidated/`.**
+  Everything in `reports/experiments/tables/` is superseded: table_2 and table_4
+  are seed 46 alone, table_6 is Run B. Regenerate with
+  `scripts/consolidate_sweep_results.py`, which refuses to summarise runs that
+  do not share a run_id, split hash, seed set and probe cohort.
