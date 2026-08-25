@@ -1,0 +1,4 @@
+experiment_id,architecture,n_seeds,temperature_mean,temperature_sd,ece_raw_mean,ece_raw_sd,ece_scaled_mean,ece_scaled_sd,nll_raw_mean,nll_raw_sd,nll_scaled_mean,nll_scaled_sd,brier_raw_mean,brier_raw_sd,brier_scaled_mean,brier_scaled_sd,gap_raw_mean,gap_raw_sd,gap_scaled_mean,gap_scaled_sd,temperature_min,temperature_max
+E001,ResNet18,5,1.2257,0.0663,0.0158,0.003,0.0113,0.0016,0.1186,0.0167,0.1101,0.0115,0.0529,0.0077,0.0519,0.0071,0.0108,0.0067,0.0034,0.0062,1.1519,1.3113
+E002,EfficientNet-B0,5,1.2263,0.1023,0.0194,0.0055,0.0155,0.0051,0.119,0.0147,0.1069,0.0141,0.0518,0.0076,0.0504,0.0073,0.016,0.0066,0.0113,0.0062,1.07,1.3076
+E003,ViT-B/16,5,1.2341,0.0145,0.0259,0.0036,0.0208,0.0048,0.1539,0.0165,0.1396,0.0133,0.0707,0.0066,0.0683,0.0058,0.0221,0.003,0.0137,0.0031,1.2185,1.258

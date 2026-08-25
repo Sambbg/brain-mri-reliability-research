@@ -1,0 +1,7 @@
+experiment_id,architecture,probe,n_seeds,n_patients,n_slices,glioma_rate_mean,glioma_rate_sd,patient_majority_mean,mean_confidence,mean_entropy,pred_glioma_mean,pred_meningioma_mean,pred_notumor_mean,pred_pituitary_mean
+E001,ResNet18,D3B,5,53,265,0.4023,0.1227,0.4075,0.7138,0.7052,0.4023,0.1698,0.2611,0.1668
+E002,EfficientNet-B0,D3B,5,53,265,0.3683,0.1396,0.3887,0.7306,0.685,0.3683,0.1547,0.2053,0.2717
+E003,ViT-B/16,D3B,5,53,265,0.2491,0.0656,0.2377,0.7821,0.5483,0.2491,0.2913,0.4302,0.0294
+E001,ResNet18,D3C,5,610,3050,0.6744,0.0727,0.6882,0.7837,0.5418,0.6744,0.0066,0.2706,0.0485
+E002,EfficientNet-B0,D3C,5,610,3050,0.5138,0.0646,0.5207,0.8115,0.4859,0.5138,0.013,0.4162,0.057
+E003,ViT-B/16,D3C,5,610,3050,0.2635,0.1139,0.2607,0.8596,0.3528,0.2635,0.0767,0.6275,0.0323
