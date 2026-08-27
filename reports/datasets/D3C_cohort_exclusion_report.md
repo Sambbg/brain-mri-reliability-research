@@ -79,3 +79,14 @@ masked than D1 on every measure. The confound was withdrawn on measurement.
 The plane sensitivity analysis recommended above is implemented in
 `scripts/d3c_plane_sensitivity.py`, with results in
 `reports/experiments/consolidated/tables/d3c_plane_sensitivity.md`.
+
+## Note (August 2026)
+
+The reference above to a skull-stripping confound is superseded. See
+`reports/datasets/D3C_skull_stripping_audit.md`: measured across 40 sampled D3C series
+against 40 matched D1 images, D3C retains extracranial anatomy throughout and is less
+masked than D1 on every measure. The confound was withdrawn on measurement.
+
+The plane sensitivity analysis recommended above is implemented in
+`scripts/d3c_plane_sensitivity.py`, with results in
+`reports/experiments/consolidated/tables/d3c_plane_sensitivity.md`.
