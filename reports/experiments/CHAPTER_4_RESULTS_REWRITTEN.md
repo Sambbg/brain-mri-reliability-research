@@ -37,7 +37,7 @@ be demonstrated, not assumed.
 
 Both shifted-domain probes passed the same audit. D3B returned no exact and no perceptual
 near-duplicates against D1 across 1,858,445 comparisons. D3C returned no exact overlaps
-and seven within-class near-duplicate pairs across 19,951,985 comparisons, with no
+and seven within-class near-duplicate pairs across 21,529,910 comparisons, with no
 cross-class pairs; the flagged pairs were concentrated in two patients, reviewed, and
 retained as coincidental anatomical similarity between central glioma slices.
 
@@ -286,6 +286,15 @@ rather than by verified tumour presence, so a fraction of no-tumour predictions 
 correspond to slices with limited visible tumour. This does not affect the
 between-architecture comparison, since all architectures were evaluated on identical
 slices, but it does place a bound on the absolute interpretation of the no-tumour share.
+
+---
+
+Imaging plane was tested as an alternative explanation for the observed separation.
+Eleven of the 610 D3C patients carry series acquired more than 10 degrees from axial.
+Recomputing every behavioural metric on a sensitivity cohort with those patients removed
+(599 patients, 2,995 slices) changes the mean glioma prediction rate by at most 0.0052 and
+preserves the architecture ordering, against a between-architecture spread of 0.41. The
+separation reported here is therefore not attributable to imaging plane.
 
 ---
 
