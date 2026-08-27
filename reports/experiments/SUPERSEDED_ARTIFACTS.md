@@ -110,3 +110,24 @@ Now prevented: artefacts are version-controlled; every run records run identifie
 split hash and checkpoint hash; and `scripts/consolidate_sweep_results.py` refuses to
 summarise unless all runs share a run identifier, split hash, seed set and evaluation
 cohort.
+
+---
+
+## Superseded audit figures
+
+| Figure | Where it appears | Replacement |
+|---|---|---|
+| D1?D3C: 19,951,985 comparisons | Proposal Table 3.4, §3.4.3, §4.1 | **21,529,910** over 3,070 slices |
+| D3C cohort 569 patients / 2,845 slices | Throughout the proposal | **610 patients / 3,050 slices** analysed; 614 / 3,070 audited |
+| "approximately twenty million comparisons" | Proposal §5.1 | more than twenty-one million |
+
+The original D1?D3C audit was run against the earlier 569-patient cohort, so roughly 205
+slices from 41 patients were never compared against D1. The re-run covers all 3,070
+converted slices, a superset of the 3,050 evaluated.
+
+## Claims closed by measurement since the sweep
+
+| Claim | Status |
+|---|---|
+| D3C is skull-stripped and therefore differs systematically from D1 | **Withdrawn.** D3C retains extracranial anatomy and is less masked than D1. |
+| Imaging plane may explain the D3C shifted-domain separation | **Ruled out.** Dropping 11 oblique patients shifts the mean glioma rate by ?0.0052 and preserves the ordering. |

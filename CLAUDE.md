@@ -182,3 +182,21 @@ These are research claims, not style preferences.
   are seed 46 alone, table_6 is Run B. Regenerate with
   `scripts/consolidate_sweep_results.py`, which refuses to summarise runs that
   do not share a run_id, split hash, seed set and probe cohort.
+
+- **D1?D3C overlap audit re-run on the full cohort (August 2026).** The earlier audit
+  covered the superseded 569-patient cohort and reported 19,951,985 comparisons, leaving
+  roughly 205 slices unaudited. Re-run over all 3,070 converted slices: **21,529,910
+  comparisons, 0 exact overlaps, 7 within-class glioma?glioma near-duplicate pairs, 0
+  cross-class**. A separate check confirmed no pHash value is shared between patients, so
+  all within-D3C collisions are between adjacent central slices of the same series. The
+  analysis cohort is 3,050 slices from 610 patients, after excluding 4 non-axial series
+  from the 614 converted. The audit therefore covers a superset of the evaluated data.
+- **Imaging plane ruled out as a confound.** Eleven patients carry series more than 10
+  degrees from axial. Dropping them shifts the mean D3C glioma prediction rate by at most
+  0.0052 and preserves the architecture ordering, against a between-architecture spread of
+  0.41. See `scripts/d3c_plane_sensitivity.py` and
+  `reports/experiments/consolidated/tables/d3c_plane_sensitivity.md`.
+- **Both D3C preprocessing confounds are now closed by measurement**, not argument: skull
+  stripping (withdrawn, `reports/datasets/D3C_skull_stripping_audit.md`) and imaging plane
+  (bounded, above). Residual differences ? CaPTk co-registration, resampling and intensity
+  normalisation ? remain uncontrolled and belong in the limitations.
