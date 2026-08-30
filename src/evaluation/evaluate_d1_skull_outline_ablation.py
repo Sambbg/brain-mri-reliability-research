@@ -32,6 +32,7 @@ import hashlib
 import json
 import os
 import subprocess
+import sys
 
 import numpy as np
 import pandas as pd
@@ -42,6 +43,9 @@ from PIL import Image
 from sklearn.metrics import f1_score, recall_score
 from torch.utils.data import DataLoader, Dataset
 from torchvision import models, transforms
+
+sys.path.insert(0, "src/stats")
+from wilson import wilson_interval  # noqa: E402
 
 SPLIT_CSV = Path("data/splits/D1_leakage_aware_split.csv")
 
@@ -345,7 +349,6 @@ def compute_metrics(y_true, y_pred, class_indices):
     if subset_true.size == 0:
         raise ValueError(f"No samples for class indices {class_indices}.")
 
-    accuracy = float(np.mean(subset_true == subset_pred))
     macro_f1 = float(
         f1_score(subset_true, subset_pred, labels=class_indices, average="macro", zero_division=0)
     )
@@ -354,13 +357,24 @@ def compute_metrics(y_true, y_pred, class_indices):
     )
 
     counts = np.bincount(subset_true, minlength=NUM_CLASSES)
-    majority_floor = float(counts.max() / subset_true.size)
+
+    # Wilson intervals on the two proportions. These describe sampling error
+    # within one checkpoint's evaluation over a fixed image set. They are NOT
+    # seed variation: spread across the five seeds is reported separately as a
+    # standard deviation, because a different seed is a different model rather
+    # than a further draw from the same binomial.
+    accuracy_ci = wilson_interval(int(np.sum(subset_true == subset_pred)), int(subset_true.size))
+    floor_ci = wilson_interval(int(counts.max()), int(subset_true.size))
 
     return {
         "n": int(subset_true.size),
-        "accuracy": accuracy,
+        "accuracy": accuracy_ci.proportion,
+        "accuracy_ci_lower": accuracy_ci.lower,
+        "accuracy_ci_upper": accuracy_ci.upper,
         "macro_f1": macro_f1,
-        "majority_class_floor": majority_floor,
+        "majority_class_floor": floor_ci.proportion,
+        "majority_class_floor_ci_lower": floor_ci.lower,
+        "majority_class_floor_ci_upper": floor_ci.upper,
         "per_class_recall": {
             CLASS_NAMES[c]: float(r) for c, r in zip(class_indices, recalls)
         },
@@ -442,12 +456,20 @@ def main():
                         "checkpoint_sha256": checkpoint_hash,
                         "n_4class": four_class["n"],
                         "accuracy_4class": four_class["accuracy"],
+                        "accuracy_4class_ci_lower": four_class["accuracy_ci_lower"],
+                        "accuracy_4class_ci_upper": four_class["accuracy_ci_upper"],
                         "macro_f1_4class": four_class["macro_f1"],
                         "majority_floor_4class": four_class["majority_class_floor"],
+                        "majority_floor_4class_ci_lower": four_class["majority_class_floor_ci_lower"],
+                        "majority_floor_4class_ci_upper": four_class["majority_class_floor_ci_upper"],
                         "n_3class": three_class["n"],
                         "accuracy_3class": three_class["accuracy"],
+                        "accuracy_3class_ci_lower": three_class["accuracy_ci_lower"],
+                        "accuracy_3class_ci_upper": three_class["accuracy_ci_upper"],
                         "macro_f1_3class": three_class["macro_f1"],
                         "majority_floor_3class": three_class["majority_class_floor"],
+                        "majority_floor_3class_ci_lower": three_class["majority_class_floor_ci_lower"],
+                        "majority_floor_3class_ci_upper": three_class["majority_class_floor_ci_upper"],
                         **{
                             f"recall_{name}": value
                             for name, value in four_class["per_class_recall"].items()
@@ -726,15 +748,38 @@ def write_report(df, summary):
 
         f.write("## Per-checkpoint detail\n\n")
         f.write(
-            "| Model | Seed | Split | Condition | Acc (4c) | Acc (3c) | F1 (4c) | F1 (3c) |\n"
+            "Accuracies carry 95% Wilson intervals. These describe sampling error "
+            "within a single checkpoint's evaluation over a fixed image set; they "
+            "are **not** seed variation, which is a different quantity and is "
+            "reported as a standard deviation in the tables above. A different "
+            "seed is a different model, not a further draw from the same "
+            "binomial, so the two must not be conflated or pooled.\n\n"
         )
-        f.write("|---|---:|---|---|---:|---:|---:|---:|\n")
+        floor_3 = df[df.split == "test"].majority_floor_3class.iloc[0]
+        floor_3_lo = df[df.split == "test"].majority_floor_3class_ci_lower.iloc[0]
+        floor_3_hi = df[df.split == "test"].majority_floor_3class_ci_upper.iloc[0]
+        f.write(
+            f"For reference the three-class chance floor on test is {floor_3:.4f} "
+            f"({floor_3_lo:.4f}, {floor_3_hi:.4f}). An ablated accuracy whose "
+            "interval falls entirely *below* that floor is not weak evidence of a "
+            "weak signal; it is evidence the model has been pushed off "
+            "distribution, since always naming the largest class would have scored "
+            "higher.\n\n"
+        )
+        f.write(
+            "| Model | Seed | Split | Condition | Acc 4c (95% CI) | "
+            "Acc 3c (95% CI) | F1 (4c) | F1 (3c) |\n"
+        )
+        f.write("|---|---:|---|---|---|---|---:|---:|\n")
         for _, row in df.sort_values(
             ["experiment_id", "seed", "split", "condition"]
         ).iterrows():
             f.write(
                 f"| {row.experiment_id} | {row.seed} | {row.split} | {row.condition} | "
-                f"{row.accuracy_4class:.4f} | {row.accuracy_3class:.4f} | "
+                f"{row.accuracy_4class:.4f} ({row.accuracy_4class_ci_lower:.4f}, "
+                f"{row.accuracy_4class_ci_upper:.4f}) | "
+                f"{row.accuracy_3class:.4f} ({row.accuracy_3class_ci_lower:.4f}, "
+                f"{row.accuracy_3class_ci_upper:.4f}) | "
                 f"{row.macro_f1_4class:.4f} | {row.macro_f1_3class:.4f} |\n"
             )
 

@@ -35,11 +35,13 @@ Two controls beyond the replication:
                     proxy from the intensity features.
 """
 
+from collections import Counter
 from pathlib import Path
 import csv
 import hashlib
 import json
 import subprocess
+import sys
 
 import numpy as np
 import pandas as pd
@@ -49,6 +51,9 @@ from sklearn.metrics import f1_score, recall_score
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.tree import DecisionTreeClassifier, export_text
+
+sys.path.insert(0, "src/stats")
+from wilson import wilson_interval  # noqa: E402
 
 SPLIT_CSV = Path("data/splits/D1_leakage_aware_split.csv")
 
@@ -223,7 +228,18 @@ def build_classifiers():
 
 
 def score(y_true, y_pred, class_indices):
-    accuracy = float(np.mean(y_true == y_pred))
+    """
+    Accuracy, macro-F1 and per-class recall, with a Wilson interval on accuracy.
+
+    Accuracy here is a proportion of correct predictions over a known, fixed
+    denominator, which is exactly the situation a Wilson interval is for; no
+    resampling is needed. The majority-class floor is a proportion over the same
+    denominator, so it gets an interval too -- comparing a point estimate against
+    a bare floor hides that the floor is itself estimated.
+    """
+    n = int(y_true.size)
+    n_correct = int(np.sum(y_true == y_pred))
+
     macro_f1 = float(
         f1_score(y_true, y_pred, labels=class_indices, average="macro", zero_division=0)
     )
@@ -232,15 +248,56 @@ def score(y_true, y_pred, class_indices):
     )
     counts = np.bincount(y_true, minlength=NUM_CLASSES)
 
+    accuracy_ci = wilson_interval(n_correct, n)
+    floor_ci = wilson_interval(int(counts.max()), n)
+
     return {
-        "n": int(y_true.size),
-        "accuracy": accuracy,
+        "n": n,
+        "n_correct": n_correct,
+        "accuracy": accuracy_ci.proportion,
+        "accuracy_ci_lower": accuracy_ci.lower,
+        "accuracy_ci_upper": accuracy_ci.upper,
         "macro_f1": macro_f1,
-        "majority_class_floor": float(counts.max() / y_true.size),
+        "majority_class_floor": floor_ci.proportion,
+        "majority_class_floor_ci_lower": floor_ci.lower,
+        "majority_class_floor_ci_upper": floor_ci.upper,
         "per_class_recall": {
             CLASS_NAMES[c]: float(r) for c, r in zip(class_indices, recalls)
         },
     }
+
+
+def d3c_notumor_shares():
+    """
+    Share of human-probe (D3C) slices assigned to notumor, per architecture.
+
+    Computed from the sweep artefacts rather than quoted from the manuscript, so
+    the connection drawn in the report cannot drift from the run set it refers
+    to. Returns {} when the predictions are absent, and the report then omits
+    the paragraph that depends on them.
+    """
+    shares = {}
+
+    for experiment_id, directory in EXPERIMENT_DIRS.items():
+        values = []
+
+        for seed in SEEDS:
+            path = directory / f"seed{seed}" / "d3c_predictions.csv"
+
+            if not path.exists():
+                continue
+
+            predictions = pd.read_csv(path, usecols=["pred_label"])
+            values.append(float((predictions.pred_label == "notumor").mean()))
+
+        if len(values) > 1:
+            shares[experiment_id] = {
+                "mean": float(np.mean(values)),
+                "sd": float(np.std(values, ddof=1)),
+                "n_seeds": len(values),
+            }
+
+    return shares
 
 
 def cnn_baselines():
@@ -343,9 +400,14 @@ def main():
                         "split": split_name,
                         "n_train": int(y_train.size),
                         "n_eval": metrics["n"],
+                        "n_correct": metrics["n_correct"],
                         "accuracy": metrics["accuracy"],
+                        "accuracy_ci_lower": metrics["accuracy_ci_lower"],
+                        "accuracy_ci_upper": metrics["accuracy_ci_upper"],
                         "macro_f1": metrics["macro_f1"],
                         "majority_class_floor": metrics["majority_class_floor"],
+                        "majority_class_floor_ci_lower": metrics["majority_class_floor_ci_lower"],
+                        "majority_class_floor_ci_upper": metrics["majority_class_floor_ci_upper"],
                         **{
                             f"recall_{name}": value
                             for name, value in metrics["per_class_recall"].items()
@@ -376,6 +438,7 @@ def main():
         "n_images_with_empty_mask": n_empty_mask,
         "cnn_baseline_4class_test_accuracy": baseline_4,
         "cnn_baseline_3class_test_accuracy": baseline_3,
+        "d3c_notumor_prediction_share": d3c_notumor_shares(),
         "decision_tree_rules": tree_rules,
     }
 
@@ -464,11 +527,33 @@ def write_report(results, summary, features):
                     "comparison with Wallis & Buvat, who reported 0.77 on Figshare.\n\n"
                 )
 
-            floor = scope.majority_class_floor.iloc[0]
-            f.write(f"Majority-class floor: {floor:.4f}.\n\n")
+            test_scope = scope[scope.split == "test"].iloc[0]
+            val_scope = scope[scope.split == "val"].iloc[0]
+            f.write(
+                "Majority-class floor: "
+                f"{test_scope.majority_class_floor:.4f} "
+                f"({test_scope.majority_class_floor_ci_lower:.4f}, "
+                f"{test_scope.majority_class_floor_ci_upper:.4f}) on test, "
+                f"{val_scope.majority_class_floor:.4f} "
+                f"({val_scope.majority_class_floor_ci_lower:.4f}, "
+                f"{val_scope.majority_class_floor_ci_upper:.4f}) on val. "
+                "A classifier whose interval overlaps the floor's has not been "
+                "shown to beat chance.\n\n"
+            )
 
-            f.write("| Feature set | Classifier | Val acc | Test acc | Test macro-F1 |\n")
-            f.write("|---|---|---:|---:|---:|\n")
+            f.write(
+                "Accuracies carry 95% Wilson intervals. Each is a proportion of "
+                "correct predictions over a fixed denominator, so the interval is "
+                "exact for that quantity and needs no resampling. Val and test are "
+                "shown side by side so their agreement is visible as overlapping "
+                "intervals rather than asserted.\n\n"
+            )
+
+            f.write(
+                "| Feature set | Classifier | Val acc (95% CI) | "
+                "Test acc (95% CI) | Test macro-F1 |\n"
+            )
+            f.write("|---|---|---|---|---:|\n")
 
             for feature_set_name in FEATURE_SETS:
                 for classifier_name in ["decision_tree", "logistic_regression"]:
@@ -480,7 +565,10 @@ def write_report(results, summary, features):
                     test = rows[rows.split == "test"].iloc[0]
                     f.write(
                         f"| `{feature_set_name}` | {classifier_name} | "
-                        f"{val.accuracy:.4f} | {test.accuracy:.4f} | "
+                        f"{val.accuracy:.4f} ({val.accuracy_ci_lower:.4f}, "
+                        f"{val.accuracy_ci_upper:.4f}) | "
+                        f"{test.accuracy:.4f} ({test.accuracy_ci_lower:.4f}, "
+                        f"{test.accuracy_ci_upper:.4f}) | "
                         f"{test.macro_f1:.4f} |\n"
                     )
             f.write("\n")
@@ -524,6 +612,119 @@ def write_report(results, summary, features):
                     f"{values.median():.3g} [{values.min():.3g}, {values.max():.3g}]"
                 )
             f.write(f"| {class_name} | " + " | ".join(cells) + " |\n")
+
+        f.write("\n## Image dimensions by class\n\n")
+        f.write(
+            "The evidence behind the geometry control, and behind the "
+            "source-class reading below. Dimensions are a property of how a file "
+            "was produced, not of the anatomy inside it.\n\n"
+        )
+        f.write("| Class | n | 512x512 | Distinct sizes | Most common size |\n")
+        f.write("|---|---:|---:|---:|---|\n")
+        for class_name in CLASS_NAMES:
+            subset = features[features.class_label == class_name]
+            sizes = list(zip(subset.width, subset.height))
+            n = len(sizes)
+            n_512 = sum(1 for w, h in sizes if w == 512 and h == 512)
+            modal_size, modal_count = Counter(sizes).most_common(1)[0]
+            f.write(
+                f"| {class_name} | {n} | {n_512} ({n_512 / n:.1%}) | "
+                f"{len(set(sizes))} | {modal_size[0]}x{modal_size[1]} "
+                f"({modal_count / n:.1%}) |\n"
+            )
+
+        d3c_shares = summary.get("d3c_notumor_prediction_share", {})
+
+        if d3c_shares:
+            four = results[
+                (results.label_scope == "four_class")
+                & (results.feature_set == "geometry_control")
+                & (results.classifier == "decision_tree")
+                & (results.split == "test")
+            ].iloc[0]
+            three = results[
+                (results.label_scope == "three_class_refit")
+                & (results.feature_set == "geometry_control")
+                & (results.classifier == "decision_tree")
+                & (results.split == "test")
+            ].iloc[0]
+
+            f.write("\n## A source-class confound, and what it may explain\n\n")
+            f.write(
+                "The geometry control is the strongest single result on this page, "
+                "and it is worth stating plainly what it shows. Image width and "
+                "height carry no anatomy whatsoever. On the three tumour classes "
+                f"they classify at {three.accuracy:.4f} "
+                f"({three.accuracy_ci_lower:.4f}, {three.accuracy_ci_upper:.4f}), "
+                "an interval that contains the chance floor of "
+                f"{three.majority_class_floor:.4f}. On all four classes the same "
+                f"two numbers reach {four.accuracy:.4f} "
+                f"({four.accuracy_ci_lower:.4f}, {four.accuracy_ci_upper:.4f}) "
+                f"against a floor of {four.majority_class_floor:.4f}, and the two "
+                "intervals are far apart. The entire gain comes from the notumor "
+                "class.\n\n"
+            )
+            f.write(
+                "The measured fact is the size distribution itself, tabulated "
+                "immediately above: the three tumour classes are overwhelmingly "
+                "512x512 while notumor spans many smaller sizes. Whatever produced "
+                "it, **notumor in D1 is separable from the tumour classes on "
+                "acquisition-level properties that carry no anatomy**, and a "
+                "classifier is free to use that instead of pathology.\n\n"
+            )
+            f.write(
+                "The likely explanation is how the dataset was assembled. "
+                "nickparvar's Kaggle description states that D1 is a merge of "
+                "Figshare/Cheng, SARTAJ and Br35H, with the notumor images taken "
+                "from Br35H -- which would put a source boundary exactly where the "
+                "size boundary is. **That composition is quoted from the dataset "
+                "description and has not been independently verified in this "
+                "project**, so it is offered as the probable mechanism behind a "
+                "measured separation, not as an established provenance record. The "
+                "separation stands on the measurement regardless of what caused "
+                "it.\n\n"
+            )
+            f.write(
+                "That raises a hypothesis for a result reported elsewhere in this "
+                "project. On the human glioma probe (D3C), the dominant "
+                "destination for misassigned slices is the no-tumour class, and it "
+                "rises steeply across architectures:\n\n"
+            )
+            f.write("| Model | D3C slices predicted notumor |\n|---|---:|\n")
+            for experiment_id in EXPERIMENT_DIRS:
+                share = d3c_shares.get(experiment_id)
+                if share:
+                    f.write(
+                        f"| {experiment_id} | {share['mean']:.4f} +/- "
+                        f"{share['sd']:.4f} |\n"
+                    )
+            f.write(
+                "\nIf a model has partly learned notumor as *images that look like "
+                "they came from Br35H* rather than *images with no tumour*, then "
+                "any out-of-distribution image is a candidate for that class, "
+                "because the discriminating cue is acquisition provenance rather "
+                "than pathology. D3C slices are CaPTk-processed, co-registered and "
+                "resampled, so they resemble neither source. Under that reading, "
+                "the no-tumour class acts as a residual bin for unfamiliar "
+                "acquisitions, and the glioma-recognition failure on D3C is partly "
+                "a dataset-construction artefact rather than purely a failure to "
+                "generalise tumour appearance.\n\n"
+            )
+            f.write(
+                "**This is a hypothesis the geometry control supports, not one it "
+                "proves.** What is established is that notumor is separable from "
+                "the tumour classes on image dimensions alone, which is a property "
+                "of D1's construction. What is not established is that the models "
+                "actually use that cue, nor that it is what drives the D3C "
+                "behaviour: the ordering of the notumor share across architectures "
+                "is not predicted by anything measured here, and an equally "
+                "consistent explanation is that no-tumour is simply the "
+                "lowest-confidence default under shift. Distinguishing them needs "
+                "a direct test -- for instance retraining with the notumor class "
+                "resampled to match the tumour classes' size distribution, or "
+                "sourcing a no-tumour set from Figshare itself, and checking "
+                "whether the D3C no-tumour share moves.\n"
+            )
 
         f.write("\n## How to read this\n\n")
         f.write(

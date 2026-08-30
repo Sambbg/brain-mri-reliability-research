@@ -1,7 +1,7 @@
 {
   "provenance": {
     "run_id": "2026-08-sweep-a",
-    "git_commit": "89fd350588250d9515bf224a5101a9f0e23efbc5",
+    "git_commit": "9eb9550dca47eb4f44103eb07bcb8c463a61bdb9",
     "git_tree_dirty": true,
     "seeds": [
       42,

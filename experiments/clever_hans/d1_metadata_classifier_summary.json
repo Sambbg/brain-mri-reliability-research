@@ -1,6 +1,6 @@
 {
   "provenance": {
-    "git_commit": "89fd350588250d9515bf224a5101a9f0e23efbc5",
+    "git_commit": "9eb9550dca47eb4f44103eb07bcb8c463a61bdb9",
     "split_csv_sha256": "944ce00e4be958f3688a0996f6fb928fc7717e7c2804abb8000f28976efe0d43",
     "random_state": 0,
     "tree_max_depth": 4,
@@ -66,6 +66,23 @@
     "E003": {
       "mean": 0.9637499999999999,
       "sd": 0.002931509849889664,
+      "n_seeds": 5
+    }
+  },
+  "d3c_notumor_prediction_share": {
+    "E001": {
+      "mean": 0.27062295081967214,
+      "sd": 0.06598298543644124,
+      "n_seeds": 5
+    },
+    "E002": {
+      "mean": 0.4161967213114754,
+      "sd": 0.09872027156706296,
+      "n_seeds": 5
+    },
+    "E003": {
+      "mean": 0.6275409836065574,
+      "sd": 0.16891467897088025,
       "n_seeds": 5
     }
   },
