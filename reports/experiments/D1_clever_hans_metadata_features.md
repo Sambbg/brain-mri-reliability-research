@@ -6,7 +6,7 @@ Replication of experiment 5 of Wallis & Buvat (2022, *Medical Image Analysis* 77
 
 | Field | Value |
 |---|---|
-| Analysis commit | `9eb9550dca47eb4f44103eb07bcb8c463a61bdb9` |
+| Analysis commit | `b72aa7708afc34b88d884950412816e2bb669205` |
 | Split csv sha256 | `944ce00e4be958f3688a0996f6fb928fc7717e7c2804abb8000f28976efe0d43` |
 | Mask threshold | 100 |
 | Decision tree max depth | 4 |
@@ -224,7 +224,7 @@ The geometry control is the strongest single result on this page, and it is wort
 
 The measured fact is the size distribution itself, tabulated immediately above: the three tumour classes are overwhelmingly 512x512 while notumor spans many smaller sizes. Whatever produced it, **notumor in D1 is separable from the tumour classes on acquisition-level properties that carry no anatomy**, and a classifier is free to use that instead of pathology.
 
-The likely explanation is how the dataset was assembled. nickparvar's Kaggle description states that D1 is a merge of Figshare/Cheng, SARTAJ and Br35H, with the notumor images taken from Br35H -- which would put a source boundary exactly where the size boundary is. **That composition is quoted from the dataset description and has not been independently verified in this project**, so it is offered as the probable mechanism behind a measured separation, not as an established provenance record. The separation stands on the measurement regardless of what caused it.
+The section below tests, against files already on disk, whether that separation reflects a difference in provenance. It does: three independent signals agree that the notumor class did not arrive with the tumour classes.
 
 That raises a hypothesis for a result reported elsewhere in this project. On the human glioma probe (D3C), the dominant destination for misassigned slices is the no-tumour class, and it rises steeply across architectures:
 
@@ -237,6 +237,47 @@ That raises a hypothesis for a result reported elsewhere in this project. On the
 If a model has partly learned notumor as *images that look like they came from Br35H* rather than *images with no tumour*, then any out-of-distribution image is a candidate for that class, because the discriminating cue is acquisition provenance rather than pathology. D3C slices are CaPTk-processed, co-registered and resampled, so they resemble neither source. Under that reading, the no-tumour class acts as a residual bin for unfamiliar acquisitions, and the glioma-recognition failure on D3C is partly a dataset-construction artefact rather than purely a failure to generalise tumour appearance.
 
 **This is a hypothesis the geometry control supports, not one it proves.** What is established is that notumor is separable from the tumour classes on image dimensions alone, which is a property of D1's construction. What is not established is that the models actually use that cue, nor that it is what drives the D3C behaviour: the ordering of the notumor share across architectures is not predicted by anything measured here, and an equally consistent explanation is that no-tumour is simply the lowest-confidence default under shift. Distinguishing them needs a direct test -- for instance retraining with the notumor class resampled to match the tumour classes' size distribution, or sourcing a no-tumour set from Figshare itself, and checking whether the D3C no-tumour share moves.
+
+## Provenance evidence from files on disk
+
+The source composition above is a claim from a dataset description. It can be tested directly, without re-downloading anything, and the tests below do not depend on that description being accurate.
+
+### JPEG encoder signatures
+
+The quantisation table records which encoder and quality setting a JPEG last passed through. It survives renaming, so it says something about a file's history that the filename does not. A class re-encoded wholesale by one pipeline shows very few tables; a class assembled from heterogeneous originals shows many, including tables occurring only once or twice in all of D1.
+
+| Class | n | Distinct tables | Modal table (share) | Images with a table seen <=5 times in D1 |
+|---|---:|---:|---|---:|
+| glioma | 1786 | 2 | `7c566016` (78.3%) | 0 (0.0%) |
+| meningioma | 1784 | 4 | `8637136d` (49.7%) | 0 (0.0%) |
+| notumor | 1681 | 50 | `3584b57f` (75.0%) | 52 (3.1%) |
+| pituitary | 1762 | 2 | `7c566016` (52.8%) | 0 (0.0%) |
+
+The three tumour classes are near-uniform. Their tables correspond to grayscale versus RGB encoding by a single pipeline, not to distinct origins. notumor is not uniform, and its dominant table is one that appears among the tumour images only in the augmented meningioma files -- so it is shared tooling, not a shared corpus.
+
+### Whether each class travels to another compilation
+
+D2 (BRISC2025) was compiled independently from the same Kaggle source. If a class belongs to a corpus that compilers draw from, it should reappear there; if it was sourced separately for D1, it need not. Matching is by pHash, so a re-encoded copy still counts and a low rate means genuinely different images.
+
+| D2 class | n in D2 | Also in D1 | Share |
+|---|---:|---:|---:|
+| glioma | 1400 | 1375 | 98.2% |
+| meningioma | 1613 | 1576 | 97.7% |
+| notumor | 1197 | 53 | 4.4% |
+| pituitary | 1740 | 1740 | 100.0% |
+
+This is the clearest signal on the page. The three tumour classes reappear almost in their entirety in an independently assembled dataset. The no-tumour class does not.
+
+### What this establishes, and what it does not
+
+**Established, by measurement:** the notumor class in D1 has a different provenance from the three tumour classes. Three independent signals agree -- image geometry, JPEG encoder history, and whether the class reappears in an independently compiled dataset. The tumour classes form a stable corpus that travels between compilations; the no-tumour images do not travel with it. This does not rest on any dataset description.
+
+**Not established:** the identity of the sources. Nothing on disk names Figshare CE-MRI, SARTAJ or Br35H, and none of those datasets is present in this repository, so no direct comparison is possible. The 512x512 uniformity of the tumour classes is consistent with Figshare CE-MRI, which is uniformly 512x512, but that is a weak fingerprint since many collections are. The specific attribution therefore remains quoted from nickparvar's dataset description rather than verified here.
+
+**Not separable at all:** any SARTAJ contribution to the tumour classes. The three tumour classes are indistinguishable from each other on every signal measured here, so if they were assembled from two upstream sources, nothing on disk resolves the boundary. The 65 glioma, 244 meningioma and 59 pituitary images that are not 512x512 are the natural candidates for a second source, but they share the tumour classes' encoder signatures and are equally consistent with rescaling within one corpus.
+
+The practical consequence is that the confound can be stated without the attribution. *notumor is separable from the tumour classes on acquisition properties alone, and was sourced differently* is measured here. Whether Br35H is the source it came from is a separate claim, and the argument does not need it.
+
 
 ## How to read this
 

@@ -93,6 +93,12 @@ REPORT_PATH = Path("reports/experiments/D1_clever_hans_metadata_features.md")
 # Optional comparator, written by evaluate_d1_skull_outline_ablation.py.
 ABLATION_METRICS_CSV = OUT_DIR / "d1_skull_outline_metrics.csv"
 
+# Provenance evidence. D2 (BRISC2025) is an independently compiled dataset drawn
+# from the same Kaggle source as D1; which of its classes still overlap D1 is a
+# direct test of whether a class travels with the tumour corpus.
+D1_PHASH_MANIFEST = Path("data/processed/D1_manifest_deduplicated_phash.csv")
+D2_PHASH_MANIFEST = Path("data/processed/D2_manifest_deduplicated_phash.csv")
+
 EXPERIMENT_DIRS = {
     "E001": Path("experiments/E001_D1_resnet18_baseline"),
     "E002": Path("experiments/E002_D1_efficientnet_b0_baseline"),
@@ -146,7 +152,21 @@ def extract_features(image_path):
     That is recorded rather than silently imputed: bbox_aspect falls back to the
     full image aspect ratio and bbox_fill to 0.0, and the row is flagged.
     """
-    grey = np.array(Image.open(image_path).convert("L"))
+    image = Image.open(image_path)
+
+    # JPEG quantisation table, read before any conversion. Different encoders and
+    # different quality settings produce different tables, so it is a fingerprint
+    # of the pipeline a file last passed through -- evidence about provenance
+    # that survives renaming.
+    quantization = getattr(image, "quantization", None)
+    if quantization:
+        qt_key = hashlib.md5(
+            repr({k: list(v) for k, v in sorted(quantization.items())}).encode()
+        ).hexdigest()[:8]
+    else:
+        qt_key = "none"
+
+    grey = np.array(image.convert("L"))
     height, width = grey.shape
 
     mask = grey >= MASK_THRESHOLD
@@ -173,6 +193,7 @@ def extract_features(image_path):
         "bbox_fill": float(bbox_fill),
         "width": int(width),
         "height": int(height),
+        "jpeg_qt": qt_key,
         "empty_mask": bool(empty_mask),
     }
 
@@ -265,6 +286,75 @@ def score(y_true, y_pred, class_indices):
             CLASS_NAMES[c]: float(r) for c, r in zip(class_indices, recalls)
         },
     }
+
+
+def d1_d2_class_overlap():
+    """
+    Per-class share of D2 (BRISC2025) images that also appear in D1, by pHash.
+
+    BRISC2025 is an independently compiled dataset documented as derived from the
+    same Kaggle source as D1. If a class travels between compilations, it belongs
+    to a corpus both compilers drew from; if it does not, that class was sourced
+    separately. That is a provenance test using only files already on disk, and
+    it does not depend on any dataset description being accurate.
+
+    pHash rather than SHA-256, so a re-encoded copy still counts as a match and
+    a low rate means genuinely different images rather than different bytes.
+    """
+    if not (D1_PHASH_MANIFEST.exists() and D2_PHASH_MANIFEST.exists()):
+        return {}
+
+    d1 = pd.read_csv(D1_PHASH_MANIFEST)
+    d2 = pd.read_csv(D2_PHASH_MANIFEST)
+
+    if not {"phash", "class_label"} <= set(d1.columns) & set(d2.columns):
+        return {}
+
+    d1_hashes = set(d1.phash)
+    overlap = {}
+
+    for class_name in sorted(d2.class_label.unique()):
+        subset = d2[d2.class_label == class_name]
+        matched = int(subset.phash.isin(d1_hashes).sum())
+        overlap[class_name] = {
+            "n_d2": int(len(subset)),
+            "matched_in_d1": matched,
+            "share": matched / len(subset) if len(subset) else float("nan"),
+        }
+
+    return overlap
+
+
+def jpeg_encoder_signature(features):
+    """
+    Per-class JPEG quantisation-table structure.
+
+    A class whose files were all re-encoded by one pipeline shows very few
+    tables. A class assembled from heterogeneous originals shows many, including
+    tables that occur only once or twice in the whole dataset.
+    """
+    global_counts = Counter(features.jpeg_qt)
+    signature = {}
+
+    for class_name in CLASS_NAMES:
+        subset = features[features.class_label == class_name]
+
+        if subset.empty:
+            continue
+
+        modal_qt, modal_count = Counter(subset.jpeg_qt).most_common(1)[0]
+        rare = int(sum(1 for k in subset.jpeg_qt if global_counts[k] <= 5))
+
+        signature[class_name] = {
+            "n": int(len(subset)),
+            "distinct_tables": int(subset.jpeg_qt.nunique()),
+            "modal_table": modal_qt,
+            "modal_share": modal_count / len(subset),
+            "rare_table_images": rare,
+            "rare_table_share": rare / len(subset),
+        }
+
+    return signature
 
 
 def d3c_notumor_shares():
@@ -439,6 +529,8 @@ def main():
         "cnn_baseline_4class_test_accuracy": baseline_4,
         "cnn_baseline_3class_test_accuracy": baseline_3,
         "d3c_notumor_prediction_share": d3c_notumor_shares(),
+        "jpeg_encoder_signature": jpeg_encoder_signature(features),
+        "d1_d2_class_overlap": d1_d2_class_overlap(),
         "decision_tree_rules": tree_rules,
     }
 
@@ -673,16 +765,10 @@ def write_report(results, summary, features):
                 "classifier is free to use that instead of pathology.\n\n"
             )
             f.write(
-                "The likely explanation is how the dataset was assembled. "
-                "nickparvar's Kaggle description states that D1 is a merge of "
-                "Figshare/Cheng, SARTAJ and Br35H, with the notumor images taken "
-                "from Br35H -- which would put a source boundary exactly where the "
-                "size boundary is. **That composition is quoted from the dataset "
-                "description and has not been independently verified in this "
-                "project**, so it is offered as the probable mechanism behind a "
-                "measured separation, not as an established provenance record. The "
-                "separation stands on the measurement regardless of what caused "
-                "it.\n\n"
+                "The section below tests, against files already on disk, whether "
+                "that separation reflects a difference in provenance. It does: "
+                "three independent signals agree that the notumor class did not "
+                "arrive with the tumour classes.\n\n"
             )
             f.write(
                 "That raises a hypothesis for a result reported elsewhere in this "
@@ -724,6 +810,117 @@ def write_report(results, summary, features):
                 "resampled to match the tumour classes' size distribution, or "
                 "sourcing a no-tumour set from Figshare itself, and checking "
                 "whether the D3C no-tumour share moves.\n"
+            )
+
+        encoder = summary.get("jpeg_encoder_signature", {})
+        d2_overlap = summary.get("d1_d2_class_overlap", {})
+
+        if encoder or d2_overlap:
+            f.write("\n## Provenance evidence from files on disk\n\n")
+            f.write(
+                "The source composition above is a claim from a dataset "
+                "description. It can be tested directly, without re-downloading "
+                "anything, and the tests below do not depend on that description "
+                "being accurate.\n\n"
+            )
+
+            if encoder:
+                f.write("### JPEG encoder signatures\n\n")
+                f.write(
+                    "The quantisation table records which encoder and quality "
+                    "setting a JPEG last passed through. It survives renaming, so "
+                    "it says something about a file's history that the filename "
+                    "does not. A class re-encoded wholesale by one pipeline shows "
+                    "very few tables; a class assembled from heterogeneous "
+                    "originals shows many, including tables occurring only once or "
+                    "twice in all of D1.\n\n"
+                )
+                f.write(
+                    "| Class | n | Distinct tables | Modal table (share) | "
+                    "Images with a table seen <=5 times in D1 |\n"
+                )
+                f.write("|---|---:|---:|---|---:|\n")
+                for class_name in CLASS_NAMES:
+                    row = encoder.get(class_name)
+                    if row:
+                        f.write(
+                            f"| {class_name} | {row['n']} | "
+                            f"{row['distinct_tables']} | `{row['modal_table']}` "
+                            f"({row['modal_share']:.1%}) | "
+                            f"{row['rare_table_images']} "
+                            f"({row['rare_table_share']:.1%}) |\n"
+                        )
+                f.write(
+                    "\nThe three tumour classes are near-uniform. Their tables "
+                    "correspond to grayscale versus RGB encoding by a single "
+                    "pipeline, not to distinct origins. notumor is not uniform, "
+                    "and its dominant table is one that appears among the tumour "
+                    "images only in the augmented meningioma files -- so it is "
+                    "shared tooling, not a shared corpus.\n\n"
+                )
+
+            if d2_overlap:
+                f.write("### Whether each class travels to another compilation\n\n")
+                f.write(
+                    "D2 (BRISC2025) was compiled independently from the same "
+                    "Kaggle source. If a class belongs to a corpus that compilers "
+                    "draw from, it should reappear there; if it was sourced "
+                    "separately for D1, it need not. Matching is by pHash, so a "
+                    "re-encoded copy still counts and a low rate means genuinely "
+                    "different images.\n\n"
+                )
+                f.write("| D2 class | n in D2 | Also in D1 | Share |\n")
+                f.write("|---|---:|---:|---:|\n")
+                for class_name in CLASS_NAMES:
+                    row = d2_overlap.get(class_name)
+                    if row:
+                        f.write(
+                            f"| {class_name} | {row['n_d2']} | "
+                            f"{row['matched_in_d1']} | {row['share']:.1%} |\n"
+                        )
+                f.write(
+                    "\nThis is the clearest signal on the page. The three tumour "
+                    "classes reappear almost in their entirety in an independently "
+                    "assembled dataset. The no-tumour class does not.\n\n"
+                )
+
+            f.write("### What this establishes, and what it does not\n\n")
+            f.write(
+                "**Established, by measurement:** the notumor class in D1 has a "
+                "different provenance from the three tumour classes. Three "
+                "independent signals agree -- image geometry, JPEG encoder "
+                "history, and whether the class reappears in an independently "
+                "compiled dataset. The tumour classes form a stable corpus that "
+                "travels between compilations; the no-tumour images do not travel "
+                "with it. This does not rest on any dataset description.\n\n"
+            )
+            f.write(
+                "**Not established:** the identity of the sources. Nothing on disk "
+                "names Figshare CE-MRI, SARTAJ or Br35H, and none of those "
+                "datasets is present in this repository, so no direct comparison "
+                "is possible. The 512x512 uniformity of the tumour classes is "
+                "consistent with Figshare CE-MRI, which is uniformly 512x512, but "
+                "that is a weak fingerprint since many collections are. The "
+                "specific attribution therefore remains quoted from nickparvar's "
+                "dataset description rather than verified here.\n\n"
+            )
+            f.write(
+                "**Not separable at all:** any SARTAJ contribution to the tumour "
+                "classes. The three tumour classes are indistinguishable from each "
+                "other on every signal measured here, so if they were assembled "
+                "from two upstream sources, nothing on disk resolves the boundary. "
+                "The 65 glioma, 244 meningioma and 59 pituitary images that are "
+                "not 512x512 are the natural candidates for a second source, but "
+                "they share the tumour classes' encoder signatures and are equally "
+                "consistent with rescaling within one corpus.\n\n"
+            )
+            f.write(
+                "The practical consequence is that the confound can be stated "
+                "without the attribution. *notumor is separable from the tumour "
+                "classes on acquisition properties alone, and was sourced "
+                "differently* is measured here. Whether Br35H is the source it "
+                "came from is a separate claim, and the argument does not need "
+                "it.\n\n"
             )
 
         f.write("\n## How to read this\n\n")

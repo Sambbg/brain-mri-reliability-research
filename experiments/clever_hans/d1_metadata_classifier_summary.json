@@ -1,6 +1,6 @@
 {
   "provenance": {
-    "git_commit": "9eb9550dca47eb4f44103eb07bcb8c463a61bdb9",
+    "git_commit": "b72aa7708afc34b88d884950412816e2bb669205",
     "split_csv_sha256": "944ce00e4be958f3688a0996f6fb928fc7717e7c2804abb8000f28976efe0d43",
     "random_state": 0,
     "tree_max_depth": 4,
@@ -84,6 +84,62 @@
       "mean": 0.6275409836065574,
       "sd": 0.16891467897088025,
       "n_seeds": 5
+    }
+  },
+  "jpeg_encoder_signature": {
+    "glioma": {
+      "n": 1786,
+      "distinct_tables": 2,
+      "modal_table": "7c566016",
+      "modal_share": 0.7833146696528556,
+      "rare_table_images": 0,
+      "rare_table_share": 0.0
+    },
+    "meningioma": {
+      "n": 1784,
+      "distinct_tables": 4,
+      "modal_table": "8637136d",
+      "modal_share": 0.4971973094170404,
+      "rare_table_images": 0,
+      "rare_table_share": 0.0
+    },
+    "notumor": {
+      "n": 1681,
+      "distinct_tables": 50,
+      "modal_table": "3584b57f",
+      "modal_share": 0.7495538370017847,
+      "rare_table_images": 52,
+      "rare_table_share": 0.030933967876264127
+    },
+    "pituitary": {
+      "n": 1762,
+      "distinct_tables": 2,
+      "modal_table": "7c566016",
+      "modal_share": 0.5278093076049943,
+      "rare_table_images": 0,
+      "rare_table_share": 0.0
+    }
+  },
+  "d1_d2_class_overlap": {
+    "glioma": {
+      "n_d2": 1400,
+      "matched_in_d1": 1375,
+      "share": 0.9821428571428571
+    },
+    "meningioma": {
+      "n_d2": 1613,
+      "matched_in_d1": 1576,
+      "share": 0.977061376317421
+    },
+    "notumor": {
+      "n_d2": 1197,
+      "matched_in_d1": 53,
+      "share": 0.04427736006683375
+    },
+    "pituitary": {
+      "n_d2": 1740,
+      "matched_in_d1": 1740,
+      "share": 1.0
     }
   },
   "decision_tree_rules": {
