@@ -1,0 +1,175 @@
+{
+  "provenance": {
+    "run_id": "2026-08-sweep-a",
+    "git_commit": "89fd350588250d9515bf224a5101a9f0e23efbc5",
+    "git_tree_dirty": true,
+    "seeds": [
+      42,
+      43,
+      44,
+      45,
+      46
+    ],
+    "split_csv_sha256": "944ce00e4be958f3688a0996f6fb928fc7717e7c2804abb8000f28976efe0d43",
+    "checkpoint_split_csv_sha256": "944ce00e4be958f3688a0996f6fb928fc7717e7c2804abb8000f28976efe0d43",
+    "checkpoint_sha256": {
+      "E001_seed42": "3451f1c66cdff9c212f0e49be6c0f2fef0bd9607dc923a2751137eb37dfda90e",
+      "E001_seed43": "2c74ecb2c490cc4447a01c97b85bda8ebc9266fb79d5834071ea0e0d556408ed",
+      "E001_seed44": "edb79337791d31a059cb878192fe8bedb743e55f6a78c0406d35d9d09a4f84bc",
+      "E001_seed45": "4ada5433daf9096bd3155be969adde4f264554ec101fa04c81d86faee937a43d",
+      "E001_seed46": "402910a2b6fdb0e5f41f1728ad4587a569236d38b8c28203bae9472b9748dbc6",
+      "E002_seed42": "eec399d181eecad8b90f6d84d9f04893ae3ffad06a1d60d007be87a4fa4c454e",
+      "E002_seed43": "62906d51c9cdffa28ebc2a7f0d08036f05462207970189010ebd5d7cdb0a24ef",
+      "E002_seed44": "1d83492aeebf3c5cb3a05edc6cebe023318d1edb9d31665a013ad7d8a7b25ceb",
+      "E002_seed45": "96664edbfc80c25362d7fae61c4853273d893c4bd563221b12274c83845dc19e",
+      "E002_seed46": "2e6a8398ffb8c74d96a02a8e56bc7611a361d0fde9bd554a9707283b466cf4ba",
+      "E003_seed42": "bca986aeabad5a35d5a57a18879fe7e9dba1844889d865dff42282f35fd24254",
+      "E003_seed43": "6f77aeb620239a3a30fff0bff81d4066551d5dee9913dd755aba620568549bdf",
+      "E003_seed44": "22fc6eeb555b797890912acd193dac7ed9ed79a775e3821413c7f75cd21a805f",
+      "E003_seed45": "f65ec2aa24723b00651f7337683d434b5dd03965ebc6912164adb932fe5431ca",
+      "E003_seed46": "606d9ef9e91c005f25be53430403b742c73c8890d4b8954bd7585ab187ff5581"
+    }
+  },
+  "method": {
+    "binarise_threshold": 100,
+    "binarise_stage": "native resolution, before resize",
+    "splits": [
+      "val",
+      "test"
+    ],
+    "conditions": [
+      "intact",
+      "skull_outline"
+    ],
+    "three_class_subset": [
+      "glioma",
+      "meningioma",
+      "pituitary"
+    ]
+  },
+  "identity_control": {
+    "checks": [
+      {
+        "experiment_id": "E001",
+        "seed": 42,
+        "recorded_test_accuracy": 0.9543292102759277,
+        "reproduced_test_accuracy": 0.9543292102759277,
+        "absolute_delta": 0.0,
+        "passed": true
+      },
+      {
+        "experiment_id": "E001",
+        "seed": 43,
+        "recorded_test_accuracy": 0.9676498572787822,
+        "reproduced_test_accuracy": 0.9676498572787822,
+        "absolute_delta": 0.0,
+        "passed": true
+      },
+      {
+        "experiment_id": "E001",
+        "seed": 44,
+        "recorded_test_accuracy": 0.9714557564224549,
+        "reproduced_test_accuracy": 0.9714557564224549,
+        "absolute_delta": 0.0,
+        "passed": true
+      },
+      {
+        "experiment_id": "E001",
+        "seed": 45,
+        "recorded_test_accuracy": 0.972407231208373,
+        "reproduced_test_accuracy": 0.972407231208373,
+        "absolute_delta": 0.0,
+        "passed": true
+      },
+      {
+        "experiment_id": "E001",
+        "seed": 46,
+        "recorded_test_accuracy": 0.9647954329210275,
+        "reproduced_test_accuracy": 0.9647954329210275,
+        "absolute_delta": 0.0,
+        "passed": true
+      },
+      {
+        "experiment_id": "E002",
+        "seed": 42,
+        "recorded_test_accuracy": 0.9743101807802094,
+        "reproduced_test_accuracy": 0.9743101807802094,
+        "absolute_delta": 0.0,
+        "passed": true
+      },
+      {
+        "experiment_id": "E002",
+        "seed": 43,
+        "recorded_test_accuracy": 0.9647954329210275,
+        "reproduced_test_accuracy": 0.9647954329210275,
+        "absolute_delta": 0.0,
+        "passed": true
+      },
+      {
+        "experiment_id": "E002",
+        "seed": 44,
+        "recorded_test_accuracy": 0.9628924833491912,
+        "reproduced_test_accuracy": 0.9628924833491912,
+        "absolute_delta": 0.0,
+        "passed": true
+      },
+      {
+        "experiment_id": "E002",
+        "seed": 45,
+        "recorded_test_accuracy": 0.9657469077069457,
+        "reproduced_test_accuracy": 0.9657469077069457,
+        "absolute_delta": 0.0,
+        "passed": true
+      },
+      {
+        "experiment_id": "E002",
+        "seed": 46,
+        "recorded_test_accuracy": 0.9676498572787822,
+        "reproduced_test_accuracy": 0.9676498572787822,
+        "absolute_delta": 0.0,
+        "passed": true
+      },
+      {
+        "experiment_id": "E003",
+        "seed": 42,
+        "recorded_test_accuracy": 0.9533777354900095,
+        "reproduced_test_accuracy": 0.9533777354900095,
+        "absolute_delta": 0.0,
+        "passed": true
+      },
+      {
+        "experiment_id": "E003",
+        "seed": 43,
+        "recorded_test_accuracy": 0.956232159847764,
+        "reproduced_test_accuracy": 0.956232159847764,
+        "absolute_delta": 0.0,
+        "passed": true
+      },
+      {
+        "experiment_id": "E003",
+        "seed": 44,
+        "recorded_test_accuracy": 0.9590865842055185,
+        "reproduced_test_accuracy": 0.9590865842055185,
+        "absolute_delta": 0.0,
+        "passed": true
+      },
+      {
+        "experiment_id": "E003",
+        "seed": 45,
+        "recorded_test_accuracy": 0.956232159847764,
+        "reproduced_test_accuracy": 0.956232159847764,
+        "absolute_delta": 0.0,
+        "passed": true
+      },
+      {
+        "experiment_id": "E003",
+        "seed": 46,
+        "recorded_test_accuracy": 0.9524262607040913,
+        "reproduced_test_accuracy": 0.9524262607040913,
+        "absolute_delta": 0.0,
+        "passed": true
+      }
+    ],
+    "all_passed": true
+  }
+}

@@ -1,0 +1,76 @@
+{
+  "provenance": {
+    "git_commit": "89fd350588250d9515bf224a5101a9f0e23efbc5",
+    "split_csv_sha256": "944ce00e4be958f3688a0996f6fb928fc7717e7c2804abb8000f28976efe0d43",
+    "random_state": 0,
+    "tree_max_depth": 4,
+    "mask_threshold": 100
+  },
+  "feature_sets": {
+    "wallis_4": [
+      "n_zero",
+      "max_intensity",
+      "bbox_aspect",
+      "bbox_fill"
+    ],
+    "wallis_3_strict": [
+      "n_zero",
+      "max_intensity",
+      "bbox_aspect"
+    ],
+    "frac_zero_sensitivity": [
+      "frac_zero",
+      "max_intensity",
+      "bbox_aspect",
+      "bbox_fill"
+    ],
+    "shape_only": [
+      "bbox_aspect",
+      "bbox_fill"
+    ],
+    "geometry_control": [
+      "width",
+      "height"
+    ]
+  },
+  "primary_feature_set": "wallis_4",
+  "n_images_with_empty_mask": 0,
+  "cnn_baseline_4class_test_accuracy": {
+    "E001": {
+      "mean": 0.966127497621313,
+      "sd": 0.007264932128951922,
+      "n_seeds": 5
+    },
+    "E002": {
+      "mean": 0.9670789724072313,
+      "sd": 0.004391239109120622,
+      "n_seeds": 5
+    },
+    "E003": {
+      "mean": 0.9554709800190295,
+      "sd": 0.0026402353806872663,
+      "n_seeds": 5
+    }
+  },
+  "cnn_baseline_3class_test_accuracy": {
+    "E001": {
+      "mean": 0.9720000000000001,
+      "sd": 0.01062867583474066,
+      "n_seeds": 5
+    },
+    "E002": {
+      "mean": 0.9732499999999998,
+      "sd": 0.0037080992435478423,
+      "n_seeds": 5
+    },
+    "E003": {
+      "mean": 0.9637499999999999,
+      "sd": 0.002931509849889664,
+      "n_seeds": 5
+    }
+  },
+  "decision_tree_rules": {
+    "four_class": "|--- bbox_fill <= 0.25\n|   |--- n_zero <= 56078.00\n|   |   |--- n_zero <= 26590.50\n|   |   |   |--- n_zero <= 19595.00\n|   |   |   |   |--- class: 3\n|   |   |   |--- n_zero >  19595.00\n|   |   |   |   |--- class: 3\n|   |   |--- n_zero >  26590.50\n|   |   |   |--- bbox_fill <= 0.08\n|   |   |   |   |--- class: 2\n|   |   |   |--- bbox_fill >  0.08\n|   |   |   |   |--- class: 1\n|   |--- n_zero >  56078.00\n|   |   |--- bbox_fill <= 0.10\n|   |   |   |--- n_zero <= 78994.50\n|   |   |   |   |--- class: 0\n|   |   |   |--- n_zero >  78994.50\n|   |   |   |   |--- class: 0\n|   |   |--- bbox_fill >  0.10\n|   |   |   |--- n_zero <= 65721.50\n|   |   |   |   |--- class: 0\n|   |   |   |--- n_zero >  65721.50\n|   |   |   |   |--- class: 1\n|--- bbox_fill >  0.25\n|   |--- bbox_aspect <= 1.15\n|   |   |--- n_zero <= 45478.00\n|   |   |   |--- n_zero <= 4236.50\n|   |   |   |   |--- class: 2\n|   |   |   |--- n_zero >  4236.50\n|   |   |   |   |--- class: 2\n|   |   |--- n_zero >  45478.00\n|   |   |   |--- n_zero <= 76662.50\n|   |   |   |   |--- class: 1\n|   |   |   |--- n_zero >  76662.50\n|   |   |   |   |--- class: 2\n|   |--- bbox_aspect >  1.15\n|   |   |--- n_zero <= 34417.50\n|   |   |   |--- bbox_aspect <= 1.25\n|   |   |   |   |--- class: 2\n|   |   |   |--- bbox_aspect >  1.25\n|   |   |   |   |--- class: 2\n|   |   |--- n_zero >  34417.50\n|   |   |   |--- bbox_fill <= 0.35\n|   |   |   |   |--- class: 1\n|   |   |   |--- bbox_fill >  0.35\n|   |   |   |   |--- class: 2\n",
+    "three_class_refit": "|--- n_zero <= 55508.00\n|   |--- n_zero <= 25563.00\n|   |   |--- n_zero <= 19967.50\n|   |   |   |--- n_zero <= 6294.00\n|   |   |   |   |--- class: 3\n|   |   |   |--- n_zero >  6294.00\n|   |   |   |   |--- class: 1\n|   |   |--- n_zero >  19967.50\n|   |   |   |--- bbox_fill <= 0.37\n|   |   |   |   |--- class: 3\n|   |   |   |--- bbox_fill >  0.37\n|   |   |   |   |--- class: 1\n|   |--- n_zero >  25563.00\n|   |   |--- bbox_fill <= 0.08\n|   |   |   |--- bbox_fill <= 0.06\n|   |   |   |   |--- class: 3\n|   |   |   |--- bbox_fill >  0.06\n|   |   |   |   |--- class: 0\n|   |   |--- bbox_fill >  0.08\n|   |   |   |--- bbox_aspect <= 1.25\n|   |   |   |   |--- class: 1\n|   |   |   |--- bbox_aspect >  1.25\n|   |   |   |   |--- class: 1\n|--- n_zero >  55508.00\n|   |--- bbox_fill <= 0.12\n|   |   |--- n_zero <= 79008.00\n|   |   |   |--- n_zero <= 70018.50\n|   |   |   |   |--- class: 0\n|   |   |   |--- n_zero >  70018.50\n|   |   |   |   |--- class: 1\n|   |   |--- n_zero >  79008.00\n|   |   |   |--- n_zero <= 115035.00\n|   |   |   |   |--- class: 0\n|   |   |   |--- n_zero >  115035.00\n|   |   |   |   |--- class: 1\n|   |--- bbox_fill >  0.12\n|   |   |--- n_zero <= 64908.50\n|   |   |   |--- bbox_fill <= 0.27\n|   |   |   |   |--- class: 0\n|   |   |   |--- bbox_fill >  0.27\n|   |   |   |   |--- class: 1\n|   |   |--- n_zero >  64908.50\n|   |   |   |--- n_zero <= 76954.00\n|   |   |   |   |--- class: 1\n|   |   |   |--- n_zero >  76954.00\n|   |   |   |   |--- class: 0\n"
+  }
+}
