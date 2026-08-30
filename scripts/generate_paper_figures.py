@@ -22,9 +22,17 @@ Outputs 300 dpi PNG and vector PDF to reports/experiments/consolidated/paper_fig
 
 import csv
 import json
+import os
 import statistics as st
 import sys
 from pathlib import Path
+
+# matplotlib stamps a wall-clock /CreationDate into every PDF it writes, so
+# regenerating the figures dirties all seven vector files in git even when
+# nothing about them has changed. matplotlib honours SOURCE_DATE_EPOCH for that
+# timestamp; pinning it makes PDF output byte-reproducible, so an unchanged
+# figure stays unchanged in the tree. 1704067200 = 2024-01-01T00:00:00Z.
+os.environ.setdefault("SOURCE_DATE_EPOCH", "1704067200")
 
 import matplotlib
 matplotlib.use("Agg")
@@ -81,6 +89,11 @@ plt.rcParams.update({
 MM = 1 / 25.4  # millimetres to inches; journals specify column widths in mm
 SINGLE_COL = 90 * MM
 DOUBLE_COL = 190 * MM
+
+# Figure 2's y-axis is deliberately truncated to resolve differences that are
+# small in absolute terms. The caption has to state the range, so both the axis
+# and the caption read it from here rather than each carrying its own literal.
+FIG2_YLIM = (0.948, 0.978)
 
 
 # ----------------------------------------------------------------- loading
@@ -355,7 +368,7 @@ def figure_2_internal(runs):
     ax.set_xticks(range(3))
     ax.set_xticklabels([ARCH[e] for e in ORDER], rotation=12, ha="right")
     ax.set_ylabel("Internal test macro-F1")
-    ax.set_ylim(0.948, 0.978)
+    ax.set_ylim(*FIG2_YLIM)
     ax.text(0.98, 0.04,
             f"spread = {spread:.4f}\nmean seed SD = {mean_sd:.4f}\nSNR = {ratio:.2f}",
             transform=ax.transAxes, ha="right", va="bottom", fontsize=7.4,
@@ -562,6 +575,10 @@ def write_captions(runs):
     """Emit caption text defining error bars, n, and axis choices."""
     n_runs = len(runs)
     n_seeds = len({r["seed"] for r in runs})
+
+    # Same call figure_2_internal() annotates the plot with, so the caption
+    # cannot drift from the figure it describes.
+    macro_f1_snr = snr(runs, "macro_f1")
     lines = [
         "# Figure captions",
         "",
@@ -580,9 +597,9 @@ def write_captions(runs):
         "architecture. Points are individual runs with horizontal jitter applied for",
         "visibility; horizontal bars are architecture means and shaded bands span",
         f"\u00B11 standard deviation across the {n_seeds} seeds. **The vertical axis is",
-        "truncated to 0.948-0.978** to resolve differences that are small in absolute",
+        f"truncated to {FIG2_YLIM[0]:g}-{FIG2_YLIM[1]:g}** to resolve differences that are small in absolute",
         "terms; this truncation is the point of the figure, since the between-",
-        "architecture spread is only 2.52 times the mean within-architecture standard",
+        f"architecture spread is only {macro_f1_snr:.2f} times the mean within-architecture standard",
         "deviation.",
         "",
         "**Figure 3.** Reliability diagrams on the internal test partition, pooled",
