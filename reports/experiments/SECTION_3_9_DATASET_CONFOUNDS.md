@@ -1,14 +1,14 @@
 # §3.9 Dataset-Intrinsic Confounds in the Internal Benchmark
 
-*New subsection, placed after §3.8 (Simpson's paradox and seed sensitivity) and
-before the integrated interpretation, which becomes §3.10.*
+*New subsection, placed after §3.7 (Simpson's paradox and seed sensitivity) and
+before the integrated interpretation, which becomes §3.9.*
 
 *All values from `experiments/clever_hans/` and the D1 manifests. Wilson 95%
 intervals throughout, computed over fixed denominators.*
 
 ---
 
-## 3.9 Dataset-Intrinsic Confounds in the Internal Benchmark
+## 3.8 Dataset-Intrinsic Confounds in the Internal Benchmark
 
 The results reported so far treat internal macro-F1 as a measurement whose
 reproducibility is in question but whose meaning is not. This section examines the
@@ -19,7 +19,7 @@ on acquisition properties alone. Both bear directly on the interpretation of eve
 internal figure in this study, and the second offers a candidate mechanism for the
 shifted-domain behaviour reported in Section 3.4.
 
-### 3.9.1 Class labels are partly predictable without tumour information
+### 3.8.1 Class labels are partly predictable without tumour information
 
 Wallis and Buvat [9] showed that high classification accuracy is achievable on a widely
 used brain tumour MRI dataset using no information about the tumour itself, arising from
@@ -27,20 +27,23 @@ implicit radiologist input in two-dimensional slice selection. Because the inter
 dataset used here derives from the same benchmark family, that finding was replicated
 directly on the leakage-aware split.
 
-Four features were extracted from each image: the proportion of exactly-zero pixels, the
-mean and maximum intensity, and the number of distinct intensity values. None encodes
-tumour appearance, location or morphology; all describe how the slice was framed and
-encoded. A decision tree and a logistic regression were fitted on the training partition
+Four features were extracted from each image: the count of exactly-zero pixels, the
+maximum intensity, and the aspect ratio and fill fraction of the bounding box enclosing
+the non-zero region. None encodes tumour appearance, location or morphology. The first
+two describe how much of the frame is empty and how the image was encoded; the latter two
+describe the outline of the imaged region, which is a property of framing and acquisition
+geometry rather than of pathology. The strict three-feature replication drops the fill
+fraction. A decision tree and a logistic regression were fitted on the training partition
 and scored on the validation and test partitions. Following the source study, the
 principal analysis is restricted to the three tumour classes, since the no-tumour class
-is treated separately in Section 3.9.2.
+is treated separately in Section 3.8.2.
 
 | Feature set | Validation accuracy (95% CI) | Test accuracy (95% CI) |
 |---|---|---|
 | Three features (strict replication) | 0.6454 (0.6117, 0.6778) | 0.6737 (0.6405, 0.7053) |
 | Four features | 0.6579 (0.6244, 0.6900) | 0.6825 (0.6494, 0.7138) |
 | Image dimensions only | 0.3483 (0.3161, 0.3820) | 0.3463 (0.3141, 0.3799) |
-| Chance floor (majority class) | 0.3358 (0.3040, 0.3691) | 0.3362 (0.3044, 0.3697) |
+| Chance floor (majority class) | 0.3358 (0.3040, 0.3693) | 0.3362 (0.3044, 0.3697) |
 
 **Table 12.** Three-class accuracy from features that cannot encode tumour appearance
 (n = 801 validation, 800 test). Wilson 95% intervals over fixed denominators.
@@ -49,13 +52,15 @@ The strict three-feature replication reaches 0.6737 (0.6405, 0.7053) on the test
 partition against a chance floor whose upper bound is 0.3697 — the nearest bounds are
 separated by 0.27. Validation and test agree as intervals rather than by assertion: every
 feature set's two intervals overlap substantially, and the largest point difference is
-0.019 against interval widths of approximately 0.065.
+0.0283 against interval widths of approximately 0.065.
 
 This is a smaller effect than the source study reports, closing roughly 54% of the
-chance-to-ceiling gap against their 81%. The fitted tree splits almost entirely on the
-proportion of exactly-zero pixels, that is on background extent, which is a property of
-how the slice was framed. Maximum intensity is never used as a split, because the
-re-encoding applied when this benchmark was compiled saturated it.
+chance-to-ceiling gap against their 81%. The fitted tree splits predominantly on the
+count of exactly-zero pixels — 18 of its 30 splits, including the root — that is on
+background extent, which is a property of how the slice was framed. Bounding-box fill
+fraction accounts for a further 10 splits and aspect ratio for 2. Maximum intensity is
+never used as a split, because the re-encoding applied when this benchmark was compiled
+saturated it.
 
 The implication is bounded but material. It does not show that the trained networks use
 these features, and a tree reaching 0.67 does not explain a network reaching 0.97. It
@@ -65,7 +70,7 @@ tumour-recognition ability by an amount this study cannot quantify. That is a st
 about the benchmark rather than about the architectures, and it applies equally to every
 published result on the same data.
 
-### 3.9.2 The no-tumour class has different provenance
+### 3.8.2 The no-tumour class has different provenance
 
 A second and distinct property emerged from the same analysis. Where the three-class
 result above uses features describing image content, the control condition used image
@@ -114,12 +119,12 @@ independently verified in this study, and none of the claims above rests on it. 
 established is that the no-tumour class was sourced differently and is separable from the
 tumour classes on acquisition properties alone.
 
-### 3.9.3 A candidate mechanism for the shifted-domain result, and its limits
+### 3.8.3 A candidate mechanism for the shifted-domain result, and its limits
 
 Section 3.4 reported that misassigned human glioma slices concentrate in the no-tumour
 class, from 0.271 ± 0.066 for ResNet18 to 0.628 ± 0.169 for ViT-B/16, and that the
 between-architecture difference cannot be attributed to slice selection because all
-architectures were evaluated on identical slices. Section 3.9.2 establishes that the
+architectures were evaluated on identical slices. Section 3.8.2 establishes that the
 no-tumour class is the one class in the internal dataset separable on acquisition
 properties alone.
 
@@ -162,7 +167,7 @@ distinguishable from the others without reference to image content at all.
 
 > A further ablation binarised the internal test images at a fixed intensity threshold,
 > retaining a skull outline and discarding internal structure, and evaluated all fifteen
-> checkpoints without retraining. Accuracy fell below the chance floor for eleven of
+> checkpoints without retraining. Accuracy fell below the chance floor for twelve of
 > fifteen checkpoints, with entire 95% intervals lying beneath it for two of the three
 > architectures. A model retaining usable signal cannot score below the accuracy obtained
 > by always predicting the largest class, so this condition measures the effect of severe
@@ -177,7 +182,7 @@ distinguishable from the others without reference to image content at all.
 
 **Placement.** After the Simpson's paradox section and before the integrated
 interpretation. It qualifies the internal measurement, so it needs to precede the
-synthesis rather than follow it. The existing §3.8 becomes §3.10.
+synthesis rather than follow it. The existing §3.8 becomes §3.9.
 
 **Two new tables**, numbered 12 and 13 following the existing eleven.
 

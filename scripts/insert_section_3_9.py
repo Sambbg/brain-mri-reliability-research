@@ -1,5 +1,10 @@
 """
-Insert Section 3.9 (dataset-intrinsic confounds) into the manuscript.
+Insert the dataset-intrinsic confounds section into the manuscript.
+
+The section is numbered 3.8 in the manuscript and the existing 3.8 becomes 3.9.
+The file name and the source file name still say 3.9, from the draft's original
+numbering, which assumed the Simpson's paradox section was 3.8 when it is 3.7.
+The numbers below are authoritative; the file names are historical.
 
 Reads:  reports/experiments/SECTION_3_9_DATASET_CONFOUNDS.md
         reports/Gonzalves_BrainMRI_Reliability_Paper_final.docx
@@ -12,12 +17,12 @@ them. See the note in insert_paper_tables.py.
 What it does:
 
   * inserts the section body before the "Integrated Interpretation" heading,
-    which is where 3.9 belongs -- it qualifies the internal measurement, so it
+    which is where it belongs -- it qualifies the internal measurement, so it
     has to precede the synthesis
   * renders the two markdown tables as boxed grey "INSERT TABLE 12/13"
     placeholders in the same style as the original placeholders, so
     insert_paper_tables.py can build them, with their captions beneath
-  * renumbers the existing 3.8 to 3.10
+  * renumbers the existing 3.8 to 3.9
   * appends the methods footnote as the last paragraph of 2.9
 
 The trailing "Notes on this draft" section of the source file is editorial
@@ -43,7 +48,7 @@ DOCX = Path("reports/Gonzalves_BrainMRI_Reliability_Paper_final.docx")
 # renumbered. Matched on the number and the leading words so a reworded title
 # still resolves.
 ANCHOR_HEADING_RE = re.compile(r"^3\.8\s+Integrated Interpretation")
-RENUMBERED_TO = "3.10"
+RENUMBERED_TO = "3.9"
 
 # The methods footnote is the final paragraph of 2.9, so it is inserted before
 # the heading that follows that section.
@@ -179,10 +184,10 @@ def parse_source(path):
     try:
         start = next(
             i for i, line in enumerate(lines)
-            if re.match(r"^##\s+3\.9\s", line)
+            if re.match(r"^##\s+3\.8\s", line)
         )
     except StopIteration:
-        sys.exit(f"No '## 3.9' heading found in {path}")
+        sys.exit(f"No '## 3.8' heading found in {path}")
 
     end = next(
         (i for i in range(start + 1, len(lines)) if lines[i].strip() == "---"),
@@ -239,10 +244,10 @@ def build_blocks(body_lines):
             blocks.append(("placeholder", table_number))
             table_number += 1
             continue
-        elif re.match(r"^###\s+3\.9\.\d", stripped):
+        elif re.match(r"^###\s+3\.8\.\d", stripped):
             flush()
             blocks.append(("heading3", re.sub(r"^###\s+", "", stripped)))
-        elif re.match(r"^##\s+3\.9\s", stripped):
+        elif re.match(r"^##\s+3\.8\s", stripped):
             flush()
             blocks.append(("heading2", re.sub(r"^##\s+", "", stripped)))
         elif re.match(r"^\*\*Table \d+\.\*\*", stripped):
@@ -274,10 +279,19 @@ def main():
 
     document = Document(str(DOCX))
 
-    if any(p.text.strip().startswith("3.9 ") for p in document.paragraphs):
+    # Guard on the section's own heading text, not on its number: the number the
+    # inserted section takes and the number the anchor is renumbered to are
+    # adjacent, so a numeric check would fire on the renamed anchor instead.
+    section_heading = next(
+        (payload for kind, payload in blocks if kind == "heading2"), None
+    )
+    if section_heading is None:
+        sys.exit("The source has no section heading to insert.")
+
+    if any(p.text.strip() == section_heading for p in document.paragraphs):
         sys.exit(
-            "Section 3.9 is already present. Refusing to insert it twice; "
-            "restore the document from git if you need to redo this."
+            f"{section_heading!r} is already present. Refusing to insert it "
+            "twice; restore the document from git if you need to redo this."
         )
 
     anchor = next(
