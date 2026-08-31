@@ -12,8 +12,8 @@ Tables built here:
     Table 4   Contamination audit of each candidate against D1
     Table 5   Architectures
     Table 6   Training hyperparameters and seed set
-    Table 12  Metadata-only classification (section 3.9)
-    Table 13  Dimensions-only classification (section 3.9)
+    Table 12  Metadata-only classification (section 3.8)
+    Table 13  Dimensions-only classification (section 3.8)
 
 Table 1 (related-works positioning) is NOT built here. It is a literature table,
 not a data table, and several of its cells could not be verified from full text.
@@ -35,14 +35,15 @@ Writes:
 This script used to read _with_figures.docx and write _final.docx, rebuilding
 the output from upstream on every run. That stopped being safe once other
 scripts began editing _final.docx directly: insert_table_1.py writes Table 1 in
-place, and insert_section_3_9.py inserts section 3.9 there. Reading from
+place, and insert_section_3_8.py inserts section 3.8 there. Reading from
 upstream would silently discard both, and it also meant this script could never
-see the section 3.9 placeholders it is meant to fill -- they exist only in
+see the section 3.8 placeholders it is meant to fill -- they exist only in
 _final. The document is now cumulative and every step edits it in place.
 
 Consuming a placeholder replaces it, so re-running only builds what is still
 outstanding. To rebuild from scratch, restore _final.docx from git and re-run
-the insert scripts in order: figures, tables, table 1, section 3.9, tables.
+the insert scripts in order: figures, tables, table 1, section 3.8, tables,
+then fix_duplicate_table_1_caption.py.
 """
 
 import csv
@@ -475,7 +476,7 @@ def main():
         built.append(num)
         print(f"  Table {num}: {len(rows)} rows, {len(headers)} columns")
 
-    # Tables 12 and 13 belong to section 3.9, which may not be inserted yet, so
+    # Tables 12 and 13 belong to section 3.8, which may not be inserted yet, so
     # they are handled here rather than through BUILDERS. The loop above will
     # have listed them as skipped because they are absent from BUILDERS; drop
     # them from that list before anything is built, so the summary does not
@@ -487,7 +488,7 @@ def main():
                      if re.match(rf"\s*INSERT TABLE {num}\b", p.text)), None)
         if para is None:
             print(f"  Table {num}: no placeholder found "
-                  f"(section 3.9 may not be inserted yet)")
+                  f"(section 3.8 may not be inserted yet)")
             continue
         headers, rows, widths = builder()
         build_table(doc, para, headers, rows, widths)

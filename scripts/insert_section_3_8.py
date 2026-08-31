@@ -1,12 +1,9 @@
 """
 Insert the dataset-intrinsic confounds section into the manuscript.
 
-The section is numbered 3.8 in the manuscript and the existing 3.8 becomes 3.9.
-The file name and the source file name still say 3.9, from the draft's original
-numbering, which assumed the Simpson's paradox section was 3.8 when it is 3.7.
-The numbers below are authoritative; the file names are historical.
+The section is numbered 3.8, and the existing 3.8 becomes 3.9.
 
-Reads:  reports/experiments/SECTION_3_9_DATASET_CONFOUNDS.md
+Reads:  reports/experiments/SECTION_3_8_DATASET_CONFOUNDS.md
         reports/Gonzalves_BrainMRI_Reliability_Paper_final.docx
 Writes: reports/Gonzalves_BrainMRI_Reliability_Paper_final.docx  (in place)
 
@@ -41,7 +38,7 @@ from docx.oxml import OxmlElement
 from docx.oxml.ns import qn
 from docx.shared import Pt, RGBColor
 
-SOURCE_MD = Path("reports/experiments/SECTION_3_9_DATASET_CONFOUNDS.md")
+SOURCE_MD = Path("reports/experiments/SECTION_3_8_DATASET_CONFOUNDS.md")
 DOCX = Path("reports/Gonzalves_BrainMRI_Reliability_Paper_final.docx")
 
 # Heading text of the section that 3.9 is inserted before, and which is then

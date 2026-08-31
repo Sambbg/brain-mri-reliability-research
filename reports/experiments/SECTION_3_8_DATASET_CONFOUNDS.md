@@ -1,4 +1,4 @@
-# §3.9 Dataset-Intrinsic Confounds in the Internal Benchmark
+# §3.8 Dataset-Intrinsic Confounds in the Internal Benchmark
 
 *New subsection, placed after §3.7 (Simpson's paradox and seed sensitivity) and
 before the integrated interpretation, which becomes §3.9.*
