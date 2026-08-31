@@ -23,14 +23,26 @@ Run from the repo root:
     python scripts/insert_paper_tables.py
 
 Reads:
-    reports/Gonzalves_BrainMRI_Reliability_Paper_with_figures.docx
+    reports/Gonzalves_BrainMRI_Reliability_Paper_final.docx  (in place)
     reports/experiments/consolidated/
     data/splits/D1_leakage_aware_split.csv
     experiments/clever_hans/
     reports/datasets/
 
 Writes:
-    reports/Gonzalves_BrainMRI_Reliability_Paper_final.docx
+    reports/Gonzalves_BrainMRI_Reliability_Paper_final.docx  (in place)
+
+This script used to read _with_figures.docx and write _final.docx, rebuilding
+the output from upstream on every run. That stopped being safe once other
+scripts began editing _final.docx directly: insert_table_1.py writes Table 1 in
+place, and insert_section_3_9.py inserts section 3.9 there. Reading from
+upstream would silently discard both, and it also meant this script could never
+see the section 3.9 placeholders it is meant to fill -- they exist only in
+_final. The document is now cumulative and every step edits it in place.
+
+Consuming a placeholder replaces it, so re-running only builds what is still
+outstanding. To rebuild from scratch, restore _final.docx from git and re-run
+the insert scripts in order: figures, tables, table 1, section 3.9, tables.
 """
 
 import csv
@@ -50,8 +62,8 @@ except ImportError:
     sys.exit("python-docx is required:  pip install python-docx")
 
 REPO = Path(".")
-DOC_IN = REPO / "reports" / "Gonzalves_BrainMRI_Reliability_Paper_with_figures.docx"
-DOC_OUT = REPO / "reports" / "Gonzalves_BrainMRI_Reliability_Paper_final.docx"
+DOC_IN = REPO / "reports" / "Gonzalves_BrainMRI_Reliability_Paper_final.docx"
+DOC_OUT = DOC_IN
 
 CONSOLIDATED = REPO / "reports" / "experiments" / "consolidated"
 SPLIT_CSV = REPO / "data" / "splits" / "D1_leakage_aware_split.csv"
@@ -355,13 +367,29 @@ def _clever_hans_rows(label_scope):
         fs = col(r, "feature_set", "features") or ""
         split = (col(r, "split", "partition") or "").lower()
         acc = col(r, "accuracy", "acc")
-        lo = col(r, "wilson_lower", "ci_lower", "acc_ci_lower")
-        hi = col(r, "wilson_upper", "ci_upper", "acc_ci_upper")
+        # accuracy_ci_lower/upper is what fit_d1_metadata_only_classifier.py
+        # actually writes. Without it the intervals were silently dropped and
+        # the table rendered bare point estimates under a caption promising
+        # Wilson bounds -- only the hardcoded fallback row kept its interval.
+        lo = col(r, "accuracy_ci_lower", "wilson_lower", "ci_lower", "acc_ci_lower")
+        hi = col(r, "accuracy_ci_upper", "wilson_upper", "ci_upper", "acc_ci_upper")
         if acc is None:
             continue
         cell = (f"{float(acc):.4f} ({float(lo):.4f}, {float(hi):.4f})"
                 if lo and hi else f"{float(acc):.4f}")
         out.setdefault(fs, {})[split] = cell
+
+        # The chance floor is a property of the partition, identical on every
+        # row of a scope, so it is read from the data rather than hardcoded.
+        floor = col(r, "majority_class_floor")
+        floor_lo = col(r, "majority_class_floor_ci_lower")
+        floor_hi = col(r, "majority_class_floor_ci_upper")
+        if floor is not None:
+            floor_cell = (
+                f"{float(floor):.4f} ({float(floor_lo):.4f}, {float(floor_hi):.4f})"
+                if floor_lo and floor_hi else f"{float(floor):.4f}"
+            )
+            out.setdefault("chance_floor", {}).setdefault(split, floor_cell)
     return out
 
 
@@ -447,7 +475,13 @@ def main():
         built.append(num)
         print(f"  Table {num}: {len(rows)} rows, {len(headers)} columns")
 
-    # Tables 12 and 13 belong to section 3.9, which may not be inserted yet.
+    # Tables 12 and 13 belong to section 3.9, which may not be inserted yet, so
+    # they are handled here rather than through BUILDERS. The loop above will
+    # have listed them as skipped because they are absent from BUILDERS; drop
+    # them from that list before anything is built, so the summary does not
+    # report the same table as both built and outstanding.
+    skipped = [n for n in skipped if n not in (12, 13)]
+
     for num, builder in ((12, table_12_metadata), (13, table_13_dimensions)):
         para = next((p for p in doc.paragraphs
                      if re.match(rf"\s*INSERT TABLE {num}\b", p.text)), None)
