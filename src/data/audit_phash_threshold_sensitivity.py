@@ -36,10 +36,16 @@ Writes:
 
 from pathlib import Path
 import hashlib
+import math
 import subprocess
+import sys
 
 import numpy as np
 import pandas as pd
+from scipy.stats import fisher_exact
+
+sys.path.insert(0, "src/stats")
+from wilson import wilson_interval  # noqa: E402
 
 THRESHOLDS = [0, 2, 4, 6, 8]
 
@@ -240,6 +246,127 @@ def audit_d1_internal(rows):
         })
 
 
+ADJUDICATION_DIR = Path("reports/datasets/phash_d6_adjudication")
+ADJUDICATION_WORKSHEET = ADJUDICATION_DIR / "adjudication_worksheet.csv"
+ADJUDICATION_KEY = ADJUDICATION_DIR / "blind_key.csv"
+
+LEAKAGE_VERDICTS = ("same_image", "same_patient")
+
+
+def newcombe_difference(k1, n1, k2, n2):
+    """
+    Newcombe's hybrid score interval for the difference of two proportions.
+
+    Built from the Wilson bounds of each proportion, so it inherits their
+    behaviour near 0 and 1 -- which matters here, where one arm sits at 35/37.
+    A Wald interval on this difference would be meaningless at that boundary.
+
+    Kept local rather than added to src/stats/, which carries a test suite this
+    would arrive without.
+    """
+    p1, p2 = k1 / n1, k2 / n2
+    a, b = wilson_interval(k1, n1), wilson_interval(k2, n2)
+
+    lower = (p1 - p2) - math.sqrt((p1 - a.lower) ** 2 + (b.upper - p2) ** 2)
+    upper = (p1 - p2) + math.sqrt((a.upper - p1) ** 2 + (p2 - b.lower) ** 2)
+
+    return p1 - p2, lower, upper
+
+
+def load_adjudication():
+    """
+    Scored blind adjudication of the Hamming-6 boundary-crossing pairs.
+
+    Returns None when the worksheet has not been scored, so the audit still runs
+    before adjudication and simply omits the section.
+    """
+    if not (ADJUDICATION_WORKSHEET.exists() and ADJUDICATION_KEY.exists()):
+        return None
+
+    worksheet = pd.read_csv(ADJUDICATION_WORKSHEET)
+
+    if worksheet.verdict.isna().any():
+        return None
+
+    key = pd.read_csv(ADJUDICATION_KEY)
+    merged = worksheet.merge(key[["pair_id", "group"]], on="pair_id", validate="1:1")
+
+    merged["is_leak"] = merged.verdict.isin(LEAKAGE_VERDICTS)
+    merged["is_unsure"] = merged.verdict == "unsure"
+
+    result = {"counts": {}, "rates": {}}
+
+    for group in ("crossing", "same_split"):
+        sub = merged[merged.group == group]
+        n_total = len(sub)
+        n_unsure = int(sub.is_unsure.sum())
+        n_leak = int(sub.is_leak.sum())
+
+        result["counts"][group] = {
+            "n": n_total,
+            "leak": n_leak,
+            "distinct": n_total - n_unsure - n_leak,
+            "unsure": n_unsure,
+        }
+        result["rates"][group] = {
+            "excluding_unsure": wilson_interval(n_leak, n_total - n_unsure),
+            "including_unsure": wilson_interval(n_leak, n_total),
+        }
+
+    counts = result["counts"]
+    for basis, denominator in (
+        ("excluding_unsure", lambda c: c["n"] - c["unsure"]),
+        ("including_unsure", lambda c: c["n"]),
+    ):
+        k1, n1 = counts["crossing"]["leak"], denominator(counts["crossing"])
+        k2, n2 = counts["same_split"]["leak"], denominator(counts["same_split"])
+        difference, lower, upper = newcombe_difference(k1, n1, k2, n2)
+        _, p_value = fisher_exact([[k1, n1 - k1], [k2, n2 - k2]])
+        result[basis] = {
+            "difference": difference,
+            "lower": lower,
+            "upper": upper,
+            "fisher_p": p_value,
+        }
+
+    null = counts["same_split"]
+    result["matcher_false_positive"] = wilson_interval(
+        null["distinct"], null["n"] - null["unsure"]
+    )
+    result["verdict_table"] = pd.crosstab(merged.verdict, merged.group)
+
+    return result
+
+
+def crossing_pair_footprint():
+    """Unique images on each side of the boundary touched by the d=6 crossing pairs."""
+    frame, hashes, labels = load_hashes(D1_PHASH, "class_label")
+
+    split = pd.read_csv(SPLIT_CSV)
+    assigned = frame.filepath.map(dict(zip(split.filepath, split.assigned_split))).to_numpy()
+
+    i, j, d = pairs_within(hashes, OPERATING_THRESHOLD + 2)
+
+    selected = (
+        (d == OPERATING_THRESHOLD + 2)
+        & (labels[i] == labels[j])
+        & (((assigned[i] == "train") & (assigned[j] == "test"))
+           | ((assigned[i] == "test") & (assigned[j] == "train")))
+    )
+
+    a, b = i[selected], j[selected]
+    test_side = np.where(assigned[a] == "test", a, b)
+    train_side = np.where(assigned[a] == "train", a, b)
+
+    return {
+        "pairs": int(selected.sum()),
+        "unique_test_images": int(len(np.unique(test_side))),
+        "unique_train_images": int(len(np.unique(train_side))),
+        "n_test": int((assigned == "test").sum()),
+        "n_train": int((assigned == "train").sum()),
+    }
+
+
 def audit_candidate(rows, name, path, label_column):
     d1_frame, d1_hashes, d1_labels = load_hashes(D1_PHASH, "class_label")
     frame, hashes, labels = load_hashes(path, label_column)
@@ -301,7 +428,7 @@ def main():
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     frame.to_csv(OUT_CSV, index=False)
 
-    write_report(frame, provenance)
+    write_report(frame, provenance, load_adjudication(), crossing_pair_footprint())
 
     print(frame[[
         "comparison", "hamming_threshold", "near_duplicate_pairs",
@@ -312,7 +439,102 @@ def main():
     print(f"Report: {OUT_REPORT}")
 
 
-def write_report(frame, provenance):
+def write_adjudication_section(f, adjudication, footprint):
+    counts = adjudication["counts"]
+    rates = adjudication["rates"]
+    excl = adjudication["excluding_unsure"]
+    incl = adjudication["including_unsure"]
+    fp = adjudication["matcher_false_positive"]
+
+    f.write("## Adjudication of the boundary-crossing pairs\n\n")
+    f.write(
+        "The counts above cannot say whether the boundary-crossing pairs are real. "
+        "40 of them were sampled against 40 same-split pairs matched on distance "
+        "and class, interleaved and scored blind "
+        "(`reports/datasets/phash_d6_adjudication/`). Leakage is `same_image` or "
+        "`same_patient`; `unsure` is reported separately rather than folded either "
+        "way.\n\n"
+    )
+
+    f.write("| Group | n | Leakage | Distinct | Unsure | Rate, unsure excluded | Rate, unsure as non-leak |\n")
+    f.write("|---|---:|---:|---:|---:|---|---|\n")
+    for group, display in (("crossing", "crossing"), ("same_split", "same-split")):
+        c, r = counts[group], rates[group]
+        f.write(
+            f"| {display} | {c['n']} | {c['leak']} | {c['distinct']} | {c['unsure']} | "
+            f"{r['excluding_unsure'].proportion:.4f} "
+            f"({r['excluding_unsure'].lower:.4f}, {r['excluding_unsure'].upper:.4f}) | "
+            f"{r['including_unsure'].proportion:.4f} "
+            f"({r['including_unsure'].lower:.4f}, {r['including_unsure'].upper:.4f}) |\n"
+        )
+    f.write(
+        f"\nDifference (crossing minus same-split), unsure excluded: "
+        f"**{excl['difference']:+.4f}**, Newcombe 95% CI "
+        f"({excl['lower']:+.4f}, {excl['upper']:+.4f}), Fisher exact "
+        f"p = {excl['fisher_p']:.3f}. Counting unsure as non-leakage: "
+        f"{incl['difference']:+.4f} ({incl['lower']:+.4f}, {incl['upper']:+.4f}), "
+        f"p = {incl['fisher_p']:.3f}.\n\n"
+    )
+
+    f.write("### What this means, which is not what the design anticipated\n\n")
+    f.write(
+        "The two groups are indistinguishable. The design treated that outcome as "
+        "exoneration: matching rates would mean Hamming 6 flags the same thing on "
+        "both sides of the boundary, so the crossing pairs would be matcher noise. "
+        "**That inference was wrong, and it is worth stating why.** It holds only "
+        "if the shared rate is low. It is not low. Both groups sit near ceiling, "
+        "so the finding is not that the matcher fires indiscriminately but that it "
+        "is accurate, and the crossing pairs are therefore real.\n\n"
+    )
+    f.write(
+        "The same-split group measures the false-positive rate directly, since a "
+        "`distinct` verdict there is the matcher being wrong. That rate is "
+        f"{fp.successes}/{fp.n} = {fp.proportion:.4f} "
+        f"({fp.lower:.4f}, {fp.upper:.4f}). A within-class pHash match at Hamming 6 "
+        "identifies the same patient roughly 95 times in 100.\n\n"
+    )
+
+    leak_rate = rates["crossing"]["excluding_unsure"]
+    estimated = footprint["unique_test_images"] * leak_rate.proportion
+    f.write(
+        f"Applying that to the population: the {footprint['pairs']} crossing pairs "
+        f"involve {footprint['unique_test_images']} distinct test images out of "
+        f"{footprint['n_test']} "
+        f"({footprint['unique_test_images'] / footprint['n_test']:.2%}) and "
+        f"{footprint['unique_train_images']} training images. Scaling by the "
+        f"adjudicated rate gives roughly **{estimated:.0f} test images "
+        f"({estimated / footprint['n_test']:.1%} of the test partition)** with a "
+        "same-patient counterpart in training, with the interval on the rate "
+        f"putting it between {footprint['unique_test_images'] * leak_rate.lower:.0f} "
+        f"and {footprint['unique_test_images'] * leak_rate.upper:.0f} images.\n\n"
+    )
+    f.write(
+        "**The frozen split leaks at the patient level.** Not by the rule it was "
+        "built under, which it satisfies exactly, but by the standard that "
+        "actually matters for a held-out test partition.\n\n"
+    )
+
+    f.write("### Limits of this estimate\n\n")
+    f.write(
+        "D1 carries no patient identifiers, so `same_patient` is a visual "
+        "judgement about whether two slices come from one acquisition, not a "
+        "lookup. It cannot be verified, and a liberal criterion would inflate both "
+        "arms together. What the design does establish independently of that "
+        "calibration is the *comparison*: whatever standard was applied, it was "
+        "applied blind and identically to both groups, and they came out the same. "
+        "The absolute rate of 95% should be read as an estimate with an unmodelled "
+        "component of adjudicator judgement; the absence of a difference between "
+        "groups is the more robust result.\n\n"
+    )
+    f.write(
+        "The sample is 40 per arm, so the difference interval spans roughly "
+        f"{excl['lower']:+.2f} to {excl['upper']:+.2f}. It excludes a large excess "
+        "in the crossing group but is consistent with a modest one in either "
+        "direction.\n\n"
+    )
+
+
+def write_report(frame, provenance, adjudication=None, footprint=None):
     internal = frame[frame.comparison == "D1_internal"]
     at_operating = internal[internal.hamming_threshold == OPERATING_THRESHOLD].iloc[0]
 
@@ -394,6 +616,9 @@ def write_report(frame, provenance):
                 f"threshold {OPERATING_THRESHOLD} and unverified above it, not that "
                 "the pairs at 6 are known to be artefacts.\n\n"
             )
+
+        if adjudication is not None and footprint is not None:
+            write_adjudication_section(f, adjudication, footprint)
 
         f.write("## Candidate datasets\n\n")
         f.write(
@@ -494,15 +719,32 @@ def write_report(frame, provenance):
             "threshold and at every stricter one, which is what the audits "
             "actually support.\n\n"
         )
-        f.write(
-            "**The frozen split is leakage-free at 0, 2 and 4, and not at 6 or 8.** "
-            "This is the one result that touches work already done. Most of the "
-            "offending pairs at 6 are within-class, so they cannot be dismissed as "
-            "matcher noise without inspecting them. Every internal metric in the "
-            "study rests on this split, so the limitation belongs in the paper: "
-            "the split is verified leakage-free under the stated matching rule and "
-            "under stricter ones, and is not verified under looser ones.\n\n"
-        )
+        if adjudication is not None and footprint is not None:
+            leak_rate = adjudication["rates"]["crossing"]["excluding_unsure"]
+            estimated = footprint["unique_test_images"] * leak_rate.proportion
+            f.write(
+                "**The frozen split satisfies its own rule and still leaks at the "
+                "patient level.** It is free of cross-partition pairs at 0, 2 and "
+                f"4, exactly as designed. At 6 there are {footprint['pairs']} "
+                "within-class boundary-crossing pairs, and blind adjudication "
+                "against a matched control found them real: both arms score near "
+                f"ceiling and the matcher's own false-positive rate is "
+                f"{adjudication['matcher_false_positive'].proportion:.1%}. That "
+                f"puts roughly {estimated:.0f} test images "
+                f"({estimated / footprint['n_test']:.0f}% of the partition) in the "
+                "position of having a same-patient counterpart in training. Image-"
+                "level and group-level leakage were controlled; patient-level "
+                "leakage was not, and is now measured rather than merely "
+                "acknowledged.\n\n"
+            )
+        else:
+            f.write(
+                "**The frozen split is leakage-free at 0, 2 and 4, and not at 6 or "
+                "8.** Most of the offending pairs at 6 are within-class, so they "
+                "cannot be dismissed as matcher noise without inspecting them. The "
+                "adjudication set exists for that purpose and has not yet been "
+                "scored.\n\n"
+            )
         f.write(
             "The specificity table is what makes the rest readable. The thresholds "
             "where the candidate decisions move are the thresholds where the "

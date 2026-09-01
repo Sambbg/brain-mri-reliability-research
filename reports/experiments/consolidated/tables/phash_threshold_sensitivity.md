@@ -6,7 +6,7 @@ Every near-duplicate audit in this project flags pairs at a pHash Hamming distan
 
 | Field | Value |
 |---|---|
-| git_commit | `ed0a8d53a31ceba7ee1c8ae7cff1d20038207590` |
+| git_commit | `311bc4b97111abb5204f04828ae04a5191b1d89c` |
 | git_tree_dirty | `True` |
 | split_csv_sha256 | `944ce00e4be958f3688a0996f6fb928fc7717e7c2804abb8000f28976efe0d43` |
 | d1_phash_sha256 | `a8d581c6b5edd3136e6661973179e6688591bade6121156ccd0a1b2a6bff2be8` |
@@ -30,6 +30,33 @@ Every near-duplicate audit in this project flags pairs at a pHash Hamming distan
 **The frozen split leaks at threshold 6 and above**: 415 near-duplicate pairs straddle the train/test boundary, against zero at 0, 2 and 4. The split was built at threshold 4 and is leakage-free by that definition, but a reviewer applying a looser rule would find contamination.
 
 The specificity argument below does **not** dispose of this. Of those 415 pairs, 44 are cross-class and therefore certainly spurious, but 371 are within-class, where the hash agreeing to within 6 bits is at least consistent with a true near-duplicate. Those have not been inspected image by image, so the honest position is that the frozen split is verified clean at threshold 4 and unverified above it, not that the pairs at 6 are known to be artefacts.
+
+## Adjudication of the boundary-crossing pairs
+
+The counts above cannot say whether the boundary-crossing pairs are real. 40 of them were sampled against 40 same-split pairs matched on distance and class, interleaved and scored blind (`reports/datasets/phash_d6_adjudication/`). Leakage is `same_image` or `same_patient`; `unsure` is reported separately rather than folded either way.
+
+| Group | n | Leakage | Distinct | Unsure | Rate, unsure excluded | Rate, unsure as non-leak |
+|---|---:|---:|---:|---:|---|---|
+| crossing | 40 | 35 | 2 | 3 | 0.9459 (0.8230, 0.9850) | 0.8750 (0.7389, 0.9454) |
+| same-split | 40 | 36 | 1 | 3 | 0.9730 (0.8618, 0.9952) | 0.9000 (0.7695, 0.9604) |
+
+Difference (crossing minus same-split), unsure excluded: **-0.0270**, Newcombe 95% CI (-0.1520, +0.0909), Fisher exact p = 1.000. Counting unsure as non-leakage: -0.0250 (-0.1739, +0.1233), p = 1.000.
+
+### What this means, which is not what the design anticipated
+
+The two groups are indistinguishable. The design treated that outcome as exoneration: matching rates would mean Hamming 6 flags the same thing on both sides of the boundary, so the crossing pairs would be matcher noise. **That inference was wrong, and it is worth stating why.** It holds only if the shared rate is low. It is not low. Both groups sit near ceiling, so the finding is not that the matcher fires indiscriminately but that it is accurate, and the crossing pairs are therefore real.
+
+The same-split group measures the false-positive rate directly, since a `distinct` verdict there is the matcher being wrong. That rate is 1/37 = 0.0270 (0.0048, 0.1382). A within-class pHash match at Hamming 6 identifies the same patient roughly 95 times in 100.
+
+Applying that to the population: the 371 crossing pairs involve 233 distinct test images out of 1051 (22.17%) and 335 training images. Scaling by the adjudicated rate gives roughly **220 test images (21.0% of the test partition)** with a same-patient counterpart in training, with the interval on the rate putting it between 192 and 230 images.
+
+**The frozen split leaks at the patient level.** Not by the rule it was built under, which it satisfies exactly, but by the standard that actually matters for a held-out test partition.
+
+### Limits of this estimate
+
+D1 carries no patient identifiers, so `same_patient` is a visual judgement about whether two slices come from one acquisition, not a lookup. It cannot be verified, and a liberal criterion would inflate both arms together. What the design does establish independently of that calibration is the *comparison*: whatever standard was applied, it was applied blind and identically to both groups, and they came out the same. The absolute rate of 95% should be read as an estimate with an unmodelled component of adjudicator judgement; the absence of a difference between groups is the more robust result.
+
+The sample is 40 per arm, so the difference interval spans roughly -0.15 to +0.09. It excludes a large excess in the crossing group but is consistent with a modest one in either direction.
 
 ## Candidate datasets
 
@@ -83,7 +110,7 @@ D3C is clean at the operating threshold (5 of 3070 images, 0.16%) but **not acro
 
 **The claim that D3B and D3C are clean across the whole range does not hold as stated, and should be narrowed rather than repeated.** Both are clean at 0 through 4. At 6 and 8 both accumulate matches, and under the stated rejection criterion D3C would flip at 6 and D3B at 8. The defensible claim is that they are clean at the operating threshold and at every stricter one, which is what the audits actually support.
 
-**The frozen split is leakage-free at 0, 2 and 4, and not at 6 or 8.** This is the one result that touches work already done. Most of the offending pairs at 6 are within-class, so they cannot be dismissed as matcher noise without inspecting them. Every internal metric in the study rests on this split, so the limitation belongs in the paper: the split is verified leakage-free under the stated matching rule and under stricter ones, and is not verified under looser ones.
+**The frozen split satisfies its own rule and still leaks at the patient level.** It is free of cross-partition pairs at 0, 2 and 4, exactly as designed. At 6 there are 371 within-class boundary-crossing pairs, and blind adjudication against a matched control found them real: both arms score near ceiling and the matcher's own false-positive rate is 2.7%. That puts roughly 220 test images (0% of the partition) in the position of having a same-patient counterpart in training. Image-level and group-level leakage were controlled; patient-level leakage was not, and is now measured rather than merely acknowledged.
 
 The specificity table is what makes the rest readable. The thresholds where the candidate decisions move are the thresholds where the matcher's own false-positive rate has risen several-fold, and at 8 the largest connected component reaches 2751 of 7013 images, which is a collapsed matcher rather than a discovery. That is an argument for not using 6 or 8. It is not a demonstration that nothing is there.
 
