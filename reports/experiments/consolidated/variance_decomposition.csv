@@ -1,0 +1,4 @@
+evaluation,F_architecture,df,p_architecture,F_seed_block,p_seed_block,var_seed,var_residual,pct_var_seed,pct_var_residual,partial_eta_sq,omega_sq,manuscript_SNR
+Internal test macro-F1,6.23,"2,8",0.0234,0.265,0.8926,0.000e+00,3.313e-05,0.0,48.9,0.609,0.464,2.52
+"D3B glioma assignment rate (canine, n = 53)",2.116,"2,8",0.1830,0.539,0.7117,0.000e+00,1.530e-02,0.0,81.8,0.346,0.145,1.4
+"D3C glioma assignment rate (human, n = 610)",30.379,"2,8",0.0002,1.179,0.3889,4.222e-04,7.057e-03,0.9,14.4,0.884,0.789,4.91
