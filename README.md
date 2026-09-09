@@ -1,4 +1,4 @@
-# Evaluating Calibration, Uncertainty, and Cross-Dataset Reliability in Brain MRI Tumour Classification
+V# Evaluating Calibration, Uncertainty, and Cross-Dataset Reliability in Brain MRI Tumour Classification
 
 ## Academic Project Information
 
@@ -6,6 +6,8 @@
 **University:** Universiti Teknologi Malaysia (UTM), Malaysia  
 **Faculty / Department:** Department of Biomedical Engineering & Health Science  
 **Supervisor:** Dr. Tan Tian Swee  
+
+Code in this repository is released under the MIT Licence. The datasets are not redistributed here and remain under their original terms: ICDC-Glioma and UPENN-GBM under CC BY 4.0 via The Cancer Imaging Archive, and the Kaggle collections under their respective terms.
 
 ## Research Title
 
